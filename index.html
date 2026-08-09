@@ -1,0 +1,2640 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0A1E42">
+<title>MoviGestion Luz</title>
+<style>
+  html,body{margin:0;padding:0;background:#F4F6FA;-webkit-text-size-adjust:100%}
+  *{-webkit-tap-highlight-color:transparent;box-sizing:border-box}
+  input,select,textarea,button{font-family:inherit}
+  button{cursor:pointer;transition:filter .12s ease, transform .05s ease}
+  button:hover{filter:brightness(0.96)}
+  button:active{transform:translateY(1px)}
+  #root{min-height:100vh;display:block}
+  @media (min-width:1000px){ body{font-size:16px} }
+</style>
+<script crossorigin src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
+<script crossorigin src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7/babel.min.js"></script>
+</head>
+<body>
+<div id="root"><div style="min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:'Segoe UI',system-ui,sans-serif;color:#0A1E42;font-weight:700">Cargando MoviGestion Luz...</div></div>
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useMemo } = React;
+
+/* ============================================================
+   MOVIGESTIÓN LUZ — Sistema de Cotizaciones y Trámites  v3
+   4 pasos de proceso · Respaldo de datos · Descarga de cotización
+   ============================================================ */
+
+const PIN_ADMIN = "MGL2026";
+const PIN_CAJA = "CAJA2026";
+const WHATSAPP = "573118085393";
+const TEL_VISIBLE = "311 808 5393";
+const LINK_SEGUIMIENTO = "https://movigestionluz.vercel.app/";
+const DIRECCION = "Jordán 3ra etapa, Casa 4 Mz 38 · Ibagué, Tolima";
+const NAVY = "#0A1E42";
+const BLUE = "#1E6FEB";
+const GOLD = "#C9A24B";
+const LOGO = "data:image/jpeg;base64,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";
+
+/* ====== Sincronización en la nube (Supabase) ======
+   Pega aquí la URL y la llave pública de tu proyecto para que
+   TODAS las cotizaciones se compartan y actualicen entre dispositivos.
+   Si se dejan vacías, la app guarda solo en este dispositivo.       */
+const SUPABASE_URL = "https://qitmdekklueehttraqlz.supabase.co";
+const SUPABASE_KEY = "sb_publishable_EWtPFSCIa_dS6Fy3EPRcGA_OBSK-Jqu";
+const sb = (SUPABASE_URL && SUPABASE_KEY && window.supabase)
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+  : null;
+
+const PASOS = [
+  "Paquete pendiente",
+  "Trámite listo para agendar",
+  "Trámite en agendamiento",
+  "Paquete listo para enviar",
+  "Paquete enviado",
+  "Paquete recibido",
+  "Documentación lista para entregar",
+  "Entregado",
+];
+const RETENIDO = "Trámite retenido";
+const ESTADOS = [...PASOS, RETENIDO];
+const ESTADO_FINAL = "Entregado";
+const ESTADOS_RESUELTOS = ["Documentación lista para entregar", "Entregado"];
+
+/* colores por estado */
+const COLOR_ESTADO = {
+  "Paquete pendiente":        { bg:"#FFF3D6", col:"#9A6B00" }, // amarillo
+  "Trámite listo para agendar":{ bg:"#E4EDFD", col:"#1E6FEB" }, // azul claro
+  "Trámite en agendamiento":  { bg:"#D3DEF8", col:"#14285A" }, // azul oscuro
+  "Paquete listo para enviar":{ bg:"#EDE4FB", col:"#6B2FB3" }, // morado
+  "Paquete enviado":          { bg:"#FBE4F1", col:"#C43D8A" }, // rosado
+  "Paquete recibido":         { bg:"#E3F6E8", col:"#1B7A3D" }, // verde
+  "Documentación lista para entregar": { bg:"#DFF3E6", col:"#146C38" }, // verde fuerte
+  "Entregado":                { bg:"#E3F6E8", col:"#1B7A3D" }, // verde
+  "Trámite retenido":         { bg:"#FBE7E4", col:"#B3372A" }, // rojo/alerta
+};
+
+const TIPOS_TRAMITE = [
+  "Matrícula / Registro","Traspaso","Traslado de matrícula / Registro","Radicado de matrícula / Registro",
+  "Cambio de color","Cambio de servicio","Cambio de empresa","Regrabar motor","Regrabar chasis",
+  "Transformación","Cambio de carrocería","Duplicado de licencia de tránsito","Duplicado de placas",
+  "Cambio de placas","Rematrícula","Inscripción de prenda","Levantamiento de prenda",
+  "Cancelación de matrícula / Registro","Refrendación de licencia","Duplicado","Certificado de tradición",
+  "Improntas","Pago de impuestos","Pago de comparendos","Inscripción RUNT","Modificación RUNT",
+  "Trámite servicio público","Asesoría","Otro"
+];
+
+const CONCEPTOS_BASE = ["Derechos de tránsito","Honorarios","Retención","Papelería","Improntas","Impuestos","Multas","Mensajería"];
+const HON_IMPUESTOS = "Honorarios de impuestos";
+const VALOR_HON_IMPUESTOS = 15000;
+
+const REQUISITOS_BASE = ["Improntas","Formulario","Mandato","Carta venta","Cédulas","Tarjeta de propiedad","Paz y salvo","Pago de impuestos"];
+const REQUISITOS_PUBLICO = ["Cesión de derechos","Levantamiento de prenda"];
+const defaultReqs = () => Object.fromEntries(REQUISITOS_BASE.map((r)=>[r, false]));
+/* lista de requisitos según el servicio del vehículo */
+const reqOrden = (c) => {
+  const publico = c && c.vehiculo && c.vehiculo.servicio === "Público";
+  return publico ? [...REQUISITOS_BASE, ...REQUISITOS_PUBLICO] : REQUISITOS_BASE;
+};
+
+/* compatibilidad: cotizaciones viejas guardaban un solo tramite.tipo */
+const getTipos = (c) => {
+  const tp = c && c.tramite;
+  if (tp && Array.isArray(tp.tipos) && tp.tipos.length) return tp.tipos;
+  if (tp && tp.tipo) return [tp.tipo];
+  return [];
+};
+const tiposTexto = (c) => getTipos(c).join(" · ") || "Trámite";
+const getSoat = (c) => (c.vehiculo && c.vehiculo.soat) || { tiene:false, desde:"", hasta:"" };
+const getTecno = (c) => (c.vehiculo && c.vehiculo.tecno) || { tiene:false, desde:"", hasta:"" };
+const getReqs = (c) => (c.tramite && c.tramite.reqs) || {};
+const docsFaltantes = (c) => reqOrden(c).filter((r)=> getReqs(c)[r] !== true);
+const getObs = (c) => Array.isArray(c.observaciones) ? c.observaciones : [];
+const getAdj = (c) => Array.isArray(c.adjuntos) ? c.adjuntos : [];
+
+/* número del cliente en formato wa.me */
+const waCliente = (c) => {
+  const tel = (c.cliente.tel || "").replace(/\D/g, "");
+  if (!tel) return WHATSAPP;
+  return tel.length === 10 ? "57" + tel : tel;
+};
+
+/* mensaje de seguimiento para el cliente (negrillas con *asteriscos*) */
+const mensajeSeguimiento = (c) => {
+  const nombre = (c.cliente.nombre || "").split(" ")[0] || "";
+  const t = totales(c);
+  if (esCotizacion(c)) {
+    let m = "";
+    m += `Hola *${nombre}* 👋 Gracias por escribir a *MoviGestión Luz*.\n\n`;
+    m += `Te compartimos tu *cotización ${c.numero}* 📋\n\n`;
+    m += `🚗 Placa: *${c.vehiculo.placa}*\n`;
+    m += `💰 Valor estimado: *${fmt(t.total)}*\n\n`;
+    m += `Puedes consultarla cuando quieras en línea 👇\n${LINK_SEGUIMIENTO}\n`;
+    m += `Ingresa con tu placa y el código *${c.codigo}*.\n\n`;
+    m += `En *MoviGestión Luz* hacemos *todo el proceso* por ti: sin filas, sin vueltas y sin errores. ✅\n\n`;
+    m += `¿List@ para realizar tu trámite? Responde a este mensaje y lo iniciamos hoy mismo. 🙌`;
+    return m;
+  }
+  const faltan = docsFaltantes(c);
+  let m = "";
+  m += `Hola *${nombre}* 👋 Gracias por confiar en *MoviGestión Luz*.\n\n`;
+  m += `Con este enlace puedes hacer seguimiento a tu trámite en cualquier momento 👇\n${LINK_SEGUIMIENTO}\n\n`;
+  m += `Ingresa estos datos:\n`;
+  m += `✅ Placa: *${c.vehiculo.placa}*\n`;
+  m += `✅ Código de seguimiento: *${c.codigo}*\n\n`;
+  m += `Ahí podrás ver:\n📍 El estado actual del trámite\n📄 Los documentos que faltan por entregar\n💰 Los saldos pendientes\n`;
+  if (faltan.length) {
+    m += `\n⚠️ *Ten en cuenta que faltan estos documentos por entregar:*\n`;
+    m += faltan.map((d)=>`• ${d}`).join("\n") + "\n";
+  }
+  m += `\nCualquier duda, escríbenos por aquí. Estamos para ayudarte. 🚗`;
+  return m;
+};
+
+/* tarifas fijas */
+const TARIFA_GENERAL = { "Papelería": 15000 };
+const TARIFA_IBAGUE = { "Honorarios": 100000, "Derechos de tránsito": 306000 };
+const BANCOS_DISPONIBLES = ["Nequi", "Davivienda", "Bancolombia"];
+/* clasificación de dinero de trámites: honorarios (ganancia real) vs canje (pasa a tránsito) */
+const CONCEPTOS_GANANCIA_APP = ["Honorarios", "Honorarios de impuestos", "Papelería", "Improntas"];
+const CONCEPTOS_CANJE_APP = ["Derechos de tránsito", "Impuestos", "Retención", "Multas", "Mensajería"];
+function clasificarConceptos(c) {
+  let ganancia = 0, canje = 0;
+  (c.conceptos || []).forEach((x) => {
+    const v = (Number(x.cant) || 1) * (Number(x.valor) || 0);
+    if (!v) return;
+    if (CONCEPTOS_GANANCIA_APP.includes(x.desc)) ganancia += v;
+    else if (CONCEPTOS_CANJE_APP.includes(x.desc)) canje += v;
+    else ganancia += v;
+  });
+  return { ganancia, canje };
+}
+/* Calcula los movimientos automáticos de caja que faltan por crear para un trámite,
+   dado su abono actual y lo que ya se ha sincronizado antes (para no duplicar).
+   Prioridad: el dinero pagado cubre primero el canje (para tránsito), el sobrante va a honorarios. */
+function calcularMovimientosAutoTramite(c, movimientosCaja) {
+  if (esCotizacion(c)) return [];
+  const { ganancia, canje } = clasificarConceptos(c);
+  const abonoEfectivo = Number(c.abonoEfectivo) || 0;
+  const abonoTransferencia = Number(c.abonoTransferencia) || 0;
+  const banco = c.bancoTransferencia || "Nequi";
+  // TODO lo ya registrado para este trámite (manual o automático) — nunca se duplica dinero real en cuentas
+  const previosDelTramite = (movimientosCaja || []).filter(m => m.tramiteId === c.id && m.tipo === "ingreso");
+  const yaEfectivo = previosDelTramite.filter(m => m.cuenta === "Efectivo").reduce((a,m)=>a+Number(m.monto),0);
+  const yaBanco = previosDelTramite.filter(m => m.cuenta === banco).reduce((a,m)=>a+Number(m.monto),0);
+  const yaTotalRegistrado = previosDelTramite.reduce((a,m)=>a+Number(m.monto),0);
+  const deltaEfectivo = Math.max(0, abonoEfectivo - yaEfectivo);
+  const deltaBanco = Math.max(0, abonoTransferencia - yaBanco);
+  if (deltaEfectivo <= 0 && deltaBanco <= 0) return [];
+  // se asume que la prioridad canje-primero ya aplicó sobre lo previamente registrado, para no descuadrar
+  let canjeRestante = Math.max(0, canje - Math.min(yaTotalRegistrado, canje));
+  const info = { numero: c.numero, placa: c.vehiculo.placa, cliente: c.cliente.nombre, tipo: tiposTexto(c) };
+  const nuevos = [];
+  // efectivo primero, luego transferencia — cada uno se reparte entre canje (prioridad) y honorarios (sobrante)
+  [{ cuenta:"Efectivo", delta:deltaEfectivo }, { cuenta:banco, delta:deltaBanco }].forEach(({ cuenta, delta }) => {
+    if (delta <= 0) return;
+    const paraCanje = Math.min(delta, canjeRestante);
+    const paraHonorarios = delta - paraCanje;
+    if (paraCanje > 0) {
+      nuevos.push({ id: uid(), tipo:"ingreso", cuenta, cuentaDest:null, monto: paraCanje,
+        categoria: "Abono trámite (Canje)", categoriaTipo:"canje", nota: `${info.numero} · ${info.placa} · ${info.cliente}`,
+        fecha: hoy(), creado: ahora(), tramiteId: c.id, autoSync:true, tramiteInfo: info });
+      canjeRestante -= paraCanje;
+    }
+    if (paraHonorarios > 0) {
+      nuevos.push({ id: uid(), tipo:"ingreso", cuenta, cuentaDest:null, monto: paraHonorarios,
+        categoria: "Abono trámite (Honorarios)", categoriaTipo:"honorarios", nota: `${info.numero} · ${info.placa} · ${info.cliente}`,
+        fecha: hoy(), creado: ahora(), tramiteId: c.id, autoSync:true, tramiteInfo: info });
+    }
+  });
+  return nuevos;
+}
+const esIbague = (c) => String(c||"").trim().toLowerCase().startsWith("ibagu");
+
+const conceptosIniciales = (ciudad) => {
+  const t = { ...TARIFA_GENERAL, ...(esIbague(ciudad) ? TARIFA_IBAGUE : {}) };
+  return CONCEPTOS_BASE.map((d) => ({ cant:1, desc:d, valor: t[d] ? String(t[d]) : "" }));
+};
+
+/* aplica tarifas al cambiar de ciudad, sin borrar lo que el asesor ya escribió a mano */
+const aplicarCiudad = (conceptos, ciudad) => {
+  const ib = esIbague(ciudad);
+  return conceptos.map((x) => {
+    if (!(x.desc in TARIFA_IBAGUE)) return x;
+    const tarifa = String(TARIFA_IBAGUE[x.desc]);
+    if (ib) return (!x.valor || x.valor === "0") ? { ...x, valor: tarifa } : x;
+    return x.valor === tarifa ? { ...x, valor: "" } : x;
+  });
+};
+
+/* si hay impuestos, agrega automáticamente los honorarios de impuestos */
+const normalizarConceptos = (conceptos) => {
+  const hayImpuesto = conceptos.some((x) => x.desc === "Impuestos" && Number(x.valor) > 0);
+  const sinHon = conceptos.filter((x) => x.desc !== HON_IMPUESTOS);
+  if (!hayImpuesto) return sinHon;
+  const i = sinHon.findIndex((x) => x.desc === "Impuestos");
+  const fila = { cant:1, desc: HON_IMPUESTOS, valor: String(VALOR_HON_IMPUESTOS), fijo: true };
+  return [...sinHon.slice(0, i+1), fila, ...sinHon.slice(i+1)];
+};
+
+const fmt = (n) => "$" + (Number(n) || 0).toLocaleString("es-CO");
+/* separador de miles mientras se escribe */
+const miles = (v) => { const d = String(v ?? "").replace(/\D/g, "").replace(/^0+(?=\d)/, ""); return d ? Number(d).toLocaleString("es-CO") : ""; };
+const soloNum = (v) => String(v ?? "").replace(/\D/g, "");
+const hoy = () => new Date().toISOString().slice(0, 10);
+/* suma un año a una fecha YYYY-MM-DD y resta un día (vigencia de un año exacto) */
+const masUnAnio = (fecha) => {
+  if (!fecha) return "";
+  const d = new Date(fecha + "T00:00:00");
+  if (isNaN(d)) return "";
+  d.setFullYear(d.getFullYear() + 1);
+  d.setDate(d.getDate() - 1);
+  return d.toISOString().slice(0, 10);
+};
+const ahora = () => new Date().toLocaleString("es-CO", { dateStyle: "short", timeStyle: "short" });
+const genCodigo = () => Array.from({length:6},()=> "ABCDEFGHJKMNPQRSTUVWXYZ23456789"[Math.floor(Math.random()*31)]).join("");
+const uid = () => Date.now() + "-" + Math.random().toString(36).slice(2, 7);
+const esc = (s) => String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+
+const cotVacia = (modo) => ({
+  id: Date.now(), modo: modo || "tramite", numero: "", codigo: genCodigo(), fecha: hoy(), vence: "", asesor: "", ciudad: "Ibagué",
+  cliente: { nombre:"", tipoDoc:"CC", doc:"", tel:"", dir:"", obs:"" },
+  vehiculo: { placa:"", marca:"", linea:"", modelo:"", tipo:"Automóvil", servicio:"Particular", ciudadMat:"", licencia:"",
+    soat: { tiene:false, desde:"", hasta:"" }, tecno: { tiene:false, desde:"", hasta:"" } },
+  tramite: { tipos:["Traspaso"], tipo:"Traspaso", desc:"", fechaEstimada:"", requisitos:"", reqs: defaultReqs(), docsEntregados:"", docsPendientes:"" },
+  conceptos: conceptosIniciales("Ibagué"),
+  descuento: "", abonoEfectivo: "", abonoTransferencia: "", bancoTransferencia: "Nequi",
+  estado: PASOS[0],
+  observaciones: [],
+  adjuntos: [],
+  historial: [],
+});
+const esCotizacion = (c) => c && c.modo === "cotizacion";
+
+const totales = (c) => {
+  const sub = c.conceptos.reduce((a, x) => a + (Number(x.cant)||1) * (Number(x.valor)||0), 0);
+  const total = sub - (Number(c.descuento)||0);
+  const abono = (Number(c.abonoEfectivo)||0) + (Number(c.abonoTransferencia)||0);
+  return { sub, total, abono, saldo: total - abono };
+};
+
+/* ---------- estilos y componentes estáticos ---------- */
+const S = {
+  input: { width:"100%", padding:"12px 14px", border:"1px solid #D5DBE7", borderRadius:10, fontSize:16, outline:"none", boxSizing:"border-box", background:"#fff", color:NAVY },
+  label: { fontSize:12, fontWeight:700, color:"#5A6478", textTransform:"uppercase", letterSpacing:".06em", marginBottom:6, display:"block" },
+  card: { background:"#fff", borderRadius:18, padding:24, boxShadow:"0 2px 10px rgba(10,30,66,.07)", border:"1px solid #E8ECF3" },
+  btnP: { background:BLUE, color:"#fff", border:"none", padding:"14px 26px", borderRadius:12, fontWeight:800, fontSize:15.5, cursor:"pointer", boxShadow:"0 2px 8px rgba(30,111,235,.28)" },
+  btnS: { background:"#fff", color:NAVY, border:"1.5px solid #CBD4E3", padding:"13px 24px", borderRadius:12, fontWeight:700, fontSize:15, cursor:"pointer" },
+  btnD: { background:"#fff", color:"#C0392B", border:"1.5px solid #F0C4BE", padding:"13px 22px", borderRadius:12, fontWeight:700, fontSize:15, cursor:"pointer" },
+  h2: { fontSize:22, fontWeight:800, color:NAVY, margin:0 },
+};
+
+const tag = (bg, col) => ({ background:bg, color:col, padding:"4px 10px", borderRadius:20, fontSize:12, fontWeight:700, display:"inline-block" });
+
+const colorEstado = (e) => {
+  const c = COLOR_ESTADO[e] || { bg:"#E4EDFD", col:BLUE };
+  return tag(c.bg, c.col);
+};
+
+function Campo({ label, children }) {
+  return (<div style={{marginBottom:12}}><label style={S.label}>{label}</label>{children}</div>);
+}
+
+function Sec({ titulo, children }) {
+  return (
+    <div style={{...S.card, marginBottom:16}}>
+      <div style={{fontWeight:800, color:NAVY, fontSize:15.5, marginBottom:14, paddingBottom:8, borderBottom:"1.5px solid #EEF1F7"}}>{titulo}</div>
+      {children}
+    </div>
+  );
+}
+
+function G2({ children }) {
+  return <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(200px, 1fr))", gap:"6px 20px"}}>{children}</div>;
+}
+
+function Logo({ dark, alto }) {
+  return (
+    <div style={{display:"flex", alignItems:"center", gap:10}}>
+      <div style={{background:"#fff", borderRadius:8, padding: dark ? "5px 9px" : 0, display:"flex"}}>
+        <img src={LOGO} alt="MoviGestión Luz" style={{height: alto || 30, display:"block"}} />
+      </div>
+    </div>
+  );
+}
+
+function Shell({ children, vista, setVista, onNueva, onSalir, toast }) {
+  const NavBtn = ({ v, label, onClick }) => (
+    <button onClick={onClick} style={{
+      background: vista===v ? BLUE : "transparent", color: vista===v ? "#fff" : "#C7D6F0",
+      border:"none", padding:"11px 20px", borderRadius:10, fontWeight:800, fontSize:15, cursor:"pointer"}}>{label}</button>
+  );
+  return (
+    <div style={{minHeight:"100vh", background:"#F4F6FA", fontFamily:"'Segoe UI',system-ui,sans-serif"}}>
+      <div style={{background:NAVY, padding:"16px clamp(20px, 4vw, 48px)", display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:12, position:"sticky", top:0, zIndex:10, boxShadow:"0 2px 12px rgba(10,30,66,.18)"}}>
+        <Logo dark alto={36} />
+        <div style={{display:"flex", gap:8, flexWrap:"wrap"}}>
+          <NavBtn v="dashboard" label="Panel" onClick={()=>setVista("dashboard")} />
+          <NavBtn v="cotizaciones" label="Cotizaciones" onClick={()=>setVista("cotizaciones")} />
+          <NavBtn v="lista" label="Trámites" onClick={()=>setVista("lista")} />
+          <NavBtn v="archivados" label="Finalizados" onClick={()=>setVista("archivados")} />
+          <NavBtn v="form" label="+ Nuevo" onClick={onNueva} />
+          <NavBtn v="ajustes" label="Respaldo" onClick={()=>setVista("ajustes")} />
+          <button onClick={onSalir} style={{background:"transparent", border:"1.5px solid #3A5588", color:"#C7D6F0", padding:"10px 18px", borderRadius:10, fontSize:14.5, fontWeight:700, cursor:"pointer"}}>Salir</button>
+        </div>
+      </div>
+      <div style={{maxWidth:1440, margin:"0 auto", padding:"32px clamp(16px, 3vw, 40px)"}}>{children}</div>
+      {toast && <div style={{position:"fixed", bottom:22, left:"50%", transform:"translateX(-50%)", background:NAVY, color:"#fff", padding:"12px 22px", borderRadius:12, fontWeight:700, fontSize:14, boxShadow:"0 6px 20px rgba(10,30,66,.3)", zIndex:50, maxWidth:"90vw", textAlign:"center"}}>{toast}</div>}
+    </div>
+  );
+}
+
+/* ---------- documento imprimible ---------- */
+function htmlCotizacion(c) {
+  const t = totales(c);
+  const filas = c.conceptos.filter(x=> Number(x.valor) > 0).map((x) =>
+    `<tr><td>${esc(x.cant)}</td><td>${esc(x.desc)}</td><td class="r">${fmt((Number(x.cant)||1)*(Number(x.valor)||0))}</td></tr>`).join("");
+  return `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cotización ${esc(c.numero)} · MoviGestión Luz</title>
+<style>
+*{box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,Arial,sans-serif;color:${NAVY};margin:0;padding:26px;background:#fff;font-size:13.5px}
+.wrap{max-width:720px;margin:0 auto}
+.head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid ${NAVY};padding-bottom:14px;margin-bottom:18px;gap:16px;flex-wrap:wrap}
+.head img{height:46px}
+.head .r{text-align:right;font-size:12px;color:#5A6478}
+.num{font-size:17px;font-weight:900;color:${NAVY}}
+.cols{display:flex;gap:24px;margin-bottom:16px;flex-wrap:wrap}
+.cols>div{flex:1;min-width:210px}
+h3{font-size:12px;letter-spacing:.06em;border-bottom:1.5px solid #E8ECF3;padding-bottom:4px;margin:0 0 7px}
+table{width:100%;border-collapse:collapse;margin-bottom:14px}
+th{background:${NAVY};color:#fff;padding:8px 10px;text-align:left;font-size:12.5px}
+td{padding:7px 10px;border-bottom:1px solid #E8ECF3}
+.r{text-align:right}
+.tot{margin-left:auto;width:290px}
+.tot .row{display:flex;justify-content:space-between;padding:4px 10px}
+.tot .big{background:${NAVY};color:#fff;font-weight:800;border-radius:6px;padding:8px 10px}
+.box{background:#F4F6FA;border-radius:10px;padding:12px 16px;font-size:12.5px;margin:14px 0}
+.foot{display:flex;justify-content:space-between;border-top:1px solid #E8ECF3;padding-top:12px;font-size:12px;color:#5A6478;flex-wrap:wrap;gap:8px}
+.req{white-space:pre-wrap;font-size:12.5px}
+.bar{position:sticky;top:0;background:${NAVY};margin:-26px -26px 20px;padding:12px 20px;display:flex;gap:10px;justify-content:flex-end}
+.bar button{background:${BLUE};color:#fff;border:none;padding:10px 18px;border-radius:9px;font-weight:700;font-size:14px;cursor:pointer}
+@media print{.bar{display:none}body{padding:0}}
+</style></head><body>
+<div class="bar"><button onclick="window.print()">Imprimir / Guardar como PDF</button></div>
+<div class="wrap">
+<div class="head">
+  <img src="${LOGO}" alt="MoviGestión Luz">
+  <div class="r">
+    <div class="num">${esCotizacion(c) ? "COTIZACIÓN" : "ORDEN DE TRÁMITE"} ${esc(c.numero)}</div>
+    <div>Fecha: ${esc(c.fecha)}</div>
+    ${c.vence ? `<div>Válida hasta: ${esc(c.vence)}</div>` : ""}
+    <div>Tel: ${TEL_VISIBLE}</div>
+    <div>${DIRECCION}</div>
+  </div>
+</div>
+<div class="cols">
+  <div><h3>CLIENTE</h3>
+    <div><b>${esc(c.cliente.nombre)}</b></div>
+    <div>${esc(c.cliente.tipoDoc)} ${esc(c.cliente.doc)}</div>
+    <div>${esc(c.cliente.tel)}</div>
+  </div>
+  <div><h3>VEHÍCULO</h3>
+    <div>Placa: <b>${esc(c.vehiculo.placa)}</b></div>
+    <div>${esc(c.vehiculo.marca)} ${esc(c.vehiculo.linea)} ${esc(c.vehiculo.modelo)}</div>
+    <div>Matriculado en: ${esc(c.vehiculo.ciudadMat) || "—"}</div>
+    <div>Servicio: ${esc(c.vehiculo.servicio)}</div>
+    <div style="margin-top:6px">SOAT: <b>${getSoat(c).tiene ? ("Vigente"+(getSoat(c).hasta?" hasta "+esc(getSoat(c).hasta):"")) : "No registra"}</b></div>
+    <div>Tecnomecánica: <b>${getTecno(c).tiene ? ("Vigente"+(getTecno(c).hasta?" hasta "+esc(getTecno(c).hasta):"")) : "No registra"}</b></div>
+  </div>
+</div>
+${esCotizacion(c) ? "" : `<h3>TRÁMITE${getTipos(c).length>1?"S":""}: ${esc(tiposTexto(c)).toUpperCase()}</h3>
+${c.tramite.desc ? `<div>${esc(c.tramite.desc)}</div>` : ""}
+${c.tramite.fechaEstimada ? `<div>Entrega estimada: ${esc(c.tramite.fechaEstimada)}</div>` : ""}`}
+<div style="height:14px"></div>
+<table><thead><tr><th>Cant.</th><th>Descripción</th><th class="r">Valor</th></tr></thead><tbody>${filas}</tbody></table>
+<div class="tot">
+  ${Number(c.descuento)>0 ? `<div class="row"><span>Descuento</span><span>−${fmt(c.descuento)}</span></div>` : ""}
+  <div class="row big"><span>TOTAL</span><span>${fmt(t.total)}</span></div>
+  ${t.abono>0 ? `<div class="row"><span>Abono</span><span>${fmt(t.abono)}</span></div>
+  <div class="row" style="font-weight:800"><span>SALDO</span><span>${fmt(t.saldo)}</span></div>
+  <div style="font-size:11.5px;color:#5A6478;margin-top:4px">
+    ${Number(c.abonoEfectivo)>0 ? `<div class="row"><span>· Efectivo</span><span>${fmt(c.abonoEfectivo)}</span></div>` : ""}
+    ${Number(c.abonoTransferencia)>0 ? `<div class="row"><span>· ${esc(c.bancoTransferencia||"Nequi")}</span><span>${fmt(c.abonoTransferencia)}</span></div>` : ""}
+  </div>` : ""}
+</div>
+${esCotizacion(c) ? `<div class="box" style="background:#FBF7EC"><b>Esta es una cotización.</b> Los valores son un estimado. Consulta en línea con la placa <b>${esc(c.vehiculo.placa)}</b> y el código <b>${esc(c.codigo)}</b>, o escríbenos para iniciar tu trámite.</div>` : ((c.tramite.reqs && Object.keys(c.tramite.reqs).length) ? `<h3 style="margin-top:18px">REQUISITOS / DOCUMENTOS</h3><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:5px 18px;font-size:12.5px;margin-top:6px">${reqOrden(c).map((r)=>{const on=getReqs(c)[r]===true;return `<div style="display:flex;align-items:center;gap:8px"><span style="width:17px;height:17px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;background:${on?'#1B7A3D':'#C9D2E2'}">${on?'✓':'✕'}</span>${esc(r)}</div>`;}).join("")}</div>` : (c.tramite.requisitos ? `<h3 style="margin-top:18px">REQUISITOS</h3><div class="req">${esc(c.tramite.requisitos)}</div>` : ""))}
+<div class="box"><b>Seguimiento en línea:</b> consulta ${esCotizacion(c) ? "tu cotización" : "el estado de tu trámite"} con la placa <b>${esc(c.vehiculo.placa)}</b> y el código <b>${esc(c.codigo)}</b>.</div>
+<div class="foot"><div>Asesor: <b>${esc(c.asesor) || "—"}</b></div><div>MoviGestión Luz · Servicios Integrales Vehiculares</div></div>
+</div></body></html>`;
+}
+
+function abrirCotizacion(c, notificar) {
+  const html = htmlCotizacion(c);
+  try {
+    const w = window.open("", "_blank");
+    if (w && w.document) {
+      w.document.open(); w.document.write(html); w.document.close();
+      return;
+    }
+  } catch (e) { /* bloqueado por el navegador */ }
+  descargarCotizacion(c, notificar);
+}
+
+function descargarCotizacion(c, notificar) {
+  try {
+    const blob = new Blob([htmlCotizacion(c)], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `Cotizacion_${c.numero || "MGL"}_${c.vehiculo.placa || ""}.html`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url), 4000);
+    if (notificar) notificar("Archivo descargado. Ábrelo y usa Imprimir → Guardar como PDF.");
+  } catch (e) { if (notificar) notificar("No se pudo descargar el archivo."); }
+}
+
+/* ============================ APP ============================ */
+function App() {
+  const [db, setDb] = useState({ cotizaciones: [], counter: 0, counterCot: 0 });
+  const [cajaData, setCajaData] = useState(null); // resumen de caja (solo lectura, para el mini-panel del dashboard)
+  const [cargando, setCargando] = useState(true);
+  const [vista, setVista] = useState("login");
+  const [modoApp, setModoApp] = useState("admin");
+  const [pin, setPin] = useState("");
+  const [errPin, setErrPin] = useState("");
+  const [sel, setSel] = useState(null);
+  const [form, setForm] = useState(null);
+  const [busqueda, setBusqueda] = useState("");
+  const [filtroEstado, setFiltroEstado] = useState("");
+  const [toast, setToast] = useState("");
+  const [pPlaca, setPPlaca] = useState("");
+  const [pCodigo, setPCodigo] = useState("");
+  const [pResultado, setPResultado] = useState(null);
+  const [pError, setPError] = useState("");
+  const [nuevoEstado, setNuevoEstado] = useState("");
+  const [obsEstado, setObsEstado] = useState("");
+  const [nuevaObs, setNuevaObs] = useState("");
+  const [obsVisible, setObsVisible] = useState(true);
+  const [abonoEfe, setAbonoEfe] = useState("");
+  const [abonoTra, setAbonoTra] = useState("");
+  const [visibleCliente, setVisibleCliente] = useState(true);
+  const [textoRestaurar, setTextoRestaurar] = useState("");
+  const [hayBorrador, setHayBorrador] = useState(false);
+
+  const [sync, setSync] = useState(sb ? "nube" : "local");
+
+  useEffect(() => { cargar(); }, []);
+  const notificar = (m) => { setToast(m); setTimeout(()=>setToast(""), 3200); };
+
+  /* ---- Borrador automático: guarda lo que se está creando/editando ---- */
+  useEffect(() => {
+    if (vista === "form" && form) {
+      try { localStorage.setItem("mgl-borrador", JSON.stringify(form)); setHayBorrador(true); } catch (e) {}
+    }
+  }, [form, vista]);
+
+  useEffect(() => {
+    try { setHayBorrador(!!localStorage.getItem("mgl-borrador")); } catch (e) {}
+  }, []);
+
+  const limpiarBorrador = () => { try { localStorage.removeItem("mgl-borrador"); } catch (e) {} setHayBorrador(false); };
+  const recuperarBorrador = () => {
+    try {
+      const b = localStorage.getItem("mgl-borrador");
+      if (b) { setForm(JSON.parse(b)); setVista("form"); notificar("Borrador recuperado"); }
+    } catch (e) { notificar("No se pudo recuperar el borrador"); }
+  };
+
+  /* ---- Cierre por inactividad (15 minutos) ---- */
+  useEffect(() => {
+    if (vista === "login" || vista === "portal") return;
+    let timer;
+    const reiniciar = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        setVista("login"); setPin("");
+        notificar("Sesión cerrada por inactividad. Tu borrador quedó guardado.");
+      }, 15 * 60 * 1000);
+    };
+    const eventos = ["mousedown","keydown","touchstart","scroll"];
+    eventos.forEach((e) => window.addEventListener(e, reiniciar));
+    reiniciar();
+    return () => { clearTimeout(timer); eventos.forEach((e) => window.removeEventListener(e, reiniciar)); };
+  }, [vista]);
+
+  async function cargar() {
+    if (sb) {
+      try {
+        const { data, error } = await sb.from("app_state").select("data").eq("id", 1).single();
+        if (!error && data && data.data) setDb(data.data);
+        sb.channel("mgl-realtime")
+          .on("postgres_changes", { event: "*", schema: "public", table: "app_state" },
+            (payload) => { if (payload.new && payload.new.data) setDb(payload.new.data); })
+          .subscribe();
+      } catch (e) { setSync("error"); }
+      // resumen de caja en solo lectura, para el mini-panel del dashboard (no bloquea la carga principal)
+      try {
+        const { data: cData } = await sb.from("caja_state").select("data").eq("id",1).single();
+        if (cData && cData.data) setCajaData(cData.data);
+        sb.channel("caja-mini")
+          .on("postgres_changes", { event: "*", schema: "public", table: "caja_state" },
+            (p) => { if (p.new && p.new.data) setCajaData(p.new.data); })
+          .subscribe();
+      } catch (e) { /* la caja aún no tiene datos */ }
+      setCargando(false);
+      return;
+    }
+    try {
+      const r = localStorage.getItem("movigestion-luz-v1");
+      if (r) setDb(JSON.parse(r));
+    } catch (e) { /* primera vez */ }
+    setCargando(false);
+  }
+  async function guardarDb(nueva) {
+    setDb(nueva);
+    if (sb) {
+      try { await sb.from("app_state").upsert({ id: 1, data: nueva }); }
+      catch (e) { notificar("No se pudo sincronizar. Revisa la conexión."); }
+      return;
+    }
+    try { localStorage.setItem("movigestion-luz-v1", JSON.stringify(nueva)); }
+    catch (e) { notificar("No se pudo guardar."); }
+  }
+
+  /* sincroniza automáticamente los movimientos de caja (honorarios/canje) cuando cambia el abono de un trámite */
+  async function sincronizarCajaAuto(cotizacion) {
+    if (!sb || esCotizacion(cotizacion)) return;
+    try {
+      const { data } = await sb.from("caja_state").select("data").eq("id", 1).single();
+      const cajaActual = (data && data.data) || { cuentas:{}, movimientos:[], arqueos:[], config:{} };
+      const nuevos = calcularMovimientosAutoTramite(cotizacion, cajaActual.movimientos || []);
+      if (nuevos.length === 0) return;
+      const nueva = { ...cajaActual, movimientos: [...nuevos, ...(cajaActual.movimientos || [])] };
+      await sb.from("caja_state").upsert({ id: 1, data: nueva });
+      setCajaData(nueva);
+    } catch (e) { /* la caja aún no existe o no hay conexión; el botón manual queda de respaldo */ }
+  }
+
+  const upd = (path, val) => {
+    setForm((f) => {
+      const n = JSON.parse(JSON.stringify(f));
+      const keys = path.split(".");
+      let o = n; for (let i = 0; i < keys.length - 1; i++) o = o[keys[i]];
+      o[keys[keys.length - 1]] = val;
+      return n;
+    });
+  };
+
+  function guardarCotizacion() {
+    const f = { ...form };
+    if (!f.cliente.nombre.trim() || !f.vehiculo.placa.trim()) { notificar("Nombre del cliente y placa son obligatorios."); return; }
+    f.vehiculo.placa = f.vehiculo.placa.toUpperCase().trim();
+    if (!f.tramite.tipos || !f.tramite.tipos.length) f.tramite.tipos = [f.tramite.tipo || "Traspaso"];
+    f.tramite.tipo = f.tramite.tipos[0];
+    let nueva = { ...db };
+    const existe = db.cotizaciones.find((c) => c.id === f.id);
+    if (!existe) {
+      if (esCotizacion(f)) {
+        nueva.counterCot = (db.counterCot || 0) + 1;
+        f.numero = "COT-" + String(nueva.counterCot).padStart(4, "0");
+      } else {
+        nueva.counter = (db.counter || 0) + 1;
+        f.numero = "MGL-" + String(nueva.counter).padStart(4, "0");
+      }
+      f.historial = [{ de: null, a: f.estado, fecha: ahora(), usuario: f.asesor || "Admin", obs: esCotizacion(f) ? "Cotización creada" : "Trámite creado", visible: true }];
+      nueva.cotizaciones = [f, ...db.cotizaciones];
+    } else {
+      nueva.cotizaciones = db.cotizaciones.map((c) => (c.id === f.id ? f : c));
+    }
+    guardarDb(nueva);
+    sincronizarCajaAuto(f);
+    limpiarBorrador();
+    setSel(f);
+    setVista(existe ? "detalle" : "enviarWA");
+    notificar(existe ? "Cambios guardados" : (esCotizacion(f) ? "Cotización " : "Trámite ") + f.numero + " creado");
+  }
+
+  /* convertir una cotización en trámite: le asigna número MGL nuevo */
+  function convertirATramite(c) {
+    if (!window.confirm("¿Convertir esta cotización en trámite? Se le asignará un número de trámite nuevo y podrás completar toda la información.")) return;
+    const nueva = { ...db };
+    nueva.counter = (db.counter || 0) + 1;
+    const numeroMGL = "MGL-" + String(nueva.counter).padStart(4, "0");
+    const nv = { ...c, modo: "tramite", numeroCotizacion: c.numero, numero: numeroMGL, estado: PASOS[0],
+      historial: [...(c.historial||[]), { de: null, a: PASOS[0], fecha: ahora(), usuario: c.asesor || "Admin", obs: "Convertido a trámite desde " + c.numero, visible: false }] };
+    nueva.cotizaciones = db.cotizaciones.map((x) => x.id === c.id ? nv : x);
+    guardarDb(nueva);
+    setForm(JSON.parse(JSON.stringify(nv))); setVista("form");
+    notificar("Convertida a trámite " + numeroMGL + ". Completa la información.");
+  }
+
+  function cambiarEstado() {
+    if (!nuevoEstado || nuevoEstado === sel.estado) return;
+    const nv = { ...sel, estado: nuevoEstado,
+      historial: [...sel.historial, { de: sel.estado, a: nuevoEstado, fecha: ahora(), usuario: sel.asesor || "Admin", obs: obsEstado, visible: visibleCliente }] };
+    guardarDb({ ...db, cotizaciones: db.cotizaciones.map((c) => c.id === sel.id ? nv : c) });
+    setSel(nv); setNuevoEstado(""); setObsEstado("");
+    notificar("Estado actualizado: " + nuevoEstado);
+  }
+
+  /* marcar/desmarcar un documento como recibido desde el detalle */
+  function toggleDoc(r) {
+    const reqs = { ...getReqs(sel), [r]: !getReqs(sel)[r] };
+    const nv = { ...sel, tramite: { ...sel.tramite, reqs } };
+    guardarDb({ ...db, cotizaciones: db.cotizaciones.map((c) => c.id === sel.id ? nv : c) });
+    setSel(nv);
+  }
+
+  /* SOAT / Tecnomecánica desde el detalle */
+  function toggleVigencia(campo) {
+    const actual = (sel.vehiculo && sel.vehiculo[campo]) || { tiene:false, desde:"", hasta:"" };
+    const nv = { ...sel, vehiculo: { ...sel.vehiculo, [campo]: { ...actual, tiene: !actual.tiene } } };
+    guardarDb({ ...db, cotizaciones: db.cotizaciones.map((c) => c.id === sel.id ? nv : c) });
+    setSel(nv);
+  }
+  function setVigenciaFecha(campo, key, valor) {
+    const actual = (sel.vehiculo && sel.vehiculo[campo]) || { tiene:false, desde:"", hasta:"" };
+    let cambios = { [key]: valor };
+    if (key === "desde" && valor) cambios.hasta = masUnAnio(valor);
+    const nv = { ...sel, vehiculo: { ...sel.vehiculo, [campo]: { ...actual, ...cambios } } };
+    guardarDb({ ...db, cotizaciones: db.cotizaciones.map((c) => c.id === sel.id ? nv : c) });
+    setSel(nv);
+  }
+
+  /* registrar abono rápido (suma al abono existente) */
+  function registrarAbono(tipo, monto) {
+    const n = Number(String(monto).replace(/\D/g, ""));
+    if (!n) { notificar("Escribe un monto válido"); return; }
+    const campo = tipo === "efectivo" ? "abonoEfectivo" : "abonoTransferencia";
+    const actual = Number(sel[campo]) || 0;
+    const nv = { ...sel, [campo]: actual + n };
+    guardarDb({ ...db, cotizaciones: db.cotizaciones.map((c) => c.id === sel.id ? nv : c) });
+    sincronizarCajaAuto(nv);
+    setSel(nv);
+    notificar("Abono registrado: " + fmt(n) + " en " + (tipo==="efectivo"?"efectivo":"transferencia"));
+  }
+  function ajustarAbono(campo, valor) {
+    const n = campo === "bancoTransferencia" ? valor : (Number(String(valor).replace(/\D/g, "")) || 0);
+    const nv = { ...sel, [campo]: n };
+    guardarDb({ ...db, cotizaciones: db.cotizaciones.map((c) => c.id === sel.id ? nv : c) });
+    sincronizarCajaAuto(nv);
+    setSel(nv);
+  }
+
+  function agregarObs(texto, visible) {
+    if (!texto.trim()) return;
+    const obs = [...getObs(sel), { id: Date.now(), texto: texto.trim(), fecha: ahora(), visible, hecho: false }];
+    const nv = { ...sel, observaciones: obs };
+    guardarDb({ ...db, cotizaciones: db.cotizaciones.map((c) => c.id === sel.id ? nv : c) });
+    setSel(nv);
+  }
+  function toggleObs(id) {
+    const obs = getObs(sel).map((o)=> o.id===id ? { ...o, hecho: !o.hecho } : o);
+    const nv = { ...sel, observaciones: obs };
+    guardarDb({ ...db, cotizaciones: db.cotizaciones.map((c) => c.id === sel.id ? nv : c) });
+    setSel(nv);
+  }
+  function eliminarObs(id) {
+    const obs = getObs(sel).filter((o)=> o.id!==id);
+    const nv = { ...sel, observaciones: obs };
+    guardarDb({ ...db, cotizaciones: db.cotizaciones.map((c) => c.id === sel.id ? nv : c) });
+    setSel(nv);
+  }
+
+  /* ---- Adjuntos (PDF, PNG, JPG) ---- */
+  function comprimirImagen(file) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        const max = 1400;
+        let { width, height } = img;
+        if (width > max || height > max) {
+          const r = Math.min(max/width, max/height);
+          width = Math.round(width*r); height = Math.round(height*r);
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width; canvas.height = height;
+        canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+        URL.revokeObjectURL(url);
+        resolve(canvas.toDataURL("image/jpeg", 0.7));
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+      img.src = url;
+    });
+  }
+  function leerArchivo(file) {
+    return new Promise((resolve) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result);
+      r.onerror = () => resolve(null);
+      r.readAsDataURL(file);
+    });
+  }
+  async function subirAdjuntos(fileList) {
+    const files = Array.from(fileList || []);
+    if (!files.length) return;
+    const nuevos = [];
+    for (const f of files) {
+      const esImg = f.type.startsWith("image/");
+      const esPdf = f.type === "application/pdf";
+      if (!esImg && !esPdf) { notificar("Solo se permiten PDF, PNG o JPG."); continue; }
+      if (esPdf && f.size > 3 * 1024 * 1024) { notificar('"'+f.name+'" pesa más de 3 MB. Usa un PDF más liviano.'); continue; }
+      const data = esImg ? await comprimirImagen(f) : await leerArchivo(f);
+      if (!data) { notificar("No se pudo leer "+f.name); continue; }
+      nuevos.push({ id: Date.now()+Math.random().toString(36).slice(2,6), nombre: f.name, tipo: esPdf ? "pdf" : "img", data });
+    }
+    if (!nuevos.length) return;
+    const nv = { ...sel, adjuntos: [...getAdj(sel), ...nuevos] };
+    guardarDb({ ...db, cotizaciones: db.cotizaciones.map((c) => c.id === sel.id ? nv : c) });
+    setSel(nv);
+    notificar(nuevos.length === 1 ? "Archivo adjuntado" : nuevos.length+" archivos adjuntados");
+  }
+  function abrirAdjunto(a) {
+    try {
+      const win = window.open();
+      if (a.tipo === "img") win.document.write('<img src="'+a.data+'" style="max-width:100%">');
+      else win.location.href = a.data;
+    } catch (e) { notificar("No se pudo abrir el archivo"); }
+  }
+  function eliminarAdjunto(id) {
+    if (!window.confirm("¿Eliminar este archivo?")) return;
+    const nv = { ...sel, adjuntos: getAdj(sel).filter((a)=>a.id!==id) };
+    guardarDb({ ...db, cotizaciones: db.cotizaciones.map((c) => c.id === sel.id ? nv : c) });
+    setSel(nv);
+  }
+
+  function eliminar(id) {
+    if (!window.confirm("¿Eliminar esta cotización? Esta acción no se puede deshacer.")) return;
+    guardarDb({ ...db, cotizaciones: db.cotizaciones.filter((c) => c.id !== id) });
+    setVista("lista"); notificar("Cotización eliminada");
+  }
+
+  function duplicar(c) {
+    const d = JSON.parse(JSON.stringify(c));
+    d.id = Date.now(); d.numero = ""; d.codigo = genCodigo(); d.fecha = hoy();
+    d.estado = PASOS[0]; d.historial = []; d.conceptos = normalizarConceptos(d.conceptos);
+    d.abonoEfectivo = ""; d.abonoTransferencia = "";
+    setForm(d); setVista("form");
+  }
+
+  function descargarRespaldo() {
+    try {
+      const blob = new Blob([JSON.stringify(db, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = `respaldo-movigestion-${hoy()}.json`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(()=>URL.revokeObjectURL(url), 4000);
+      notificar("Respaldo descargado");
+    } catch (e) { notificar("No se pudo generar el respaldo"); }
+  }
+
+  function restaurarRespaldo() {
+    try {
+      const d = JSON.parse(textoRestaurar);
+      if (!d.cotizaciones) { notificar("El texto no tiene el formato de respaldo"); return; }
+      if (!window.confirm("Esto reemplazará las cotizaciones actuales. ¿Continuar?")) return;
+      guardarDb(d); setTextoRestaurar(""); notificar("Datos restaurados: " + d.cotizaciones.length + " cotizaciones");
+    } catch (e) { notificar("No se pudo leer el respaldo. Revisa el texto pegado."); }
+  }
+
+  function consultarPortal() {
+    setPError(""); setPResultado(null);
+    const limpiar = (v) => String(v || "").toUpperCase().replace(/[\s\-.]/g, "");
+    const placaB = limpiar(pPlaca), codigoB = limpiar(pCodigo);
+    if (!placaB || !codigoB) { setPError("Escribe la placa y el código de seguimiento."); return; }
+    const c = db.cotizaciones.find((x) =>
+      limpiar(x.vehiculo.placa) === placaB && limpiar(x.codigo) === codigoB);
+    if (!c) {
+      const soloPlaca = db.cotizaciones.find((x) => limpiar(x.vehiculo.placa) === placaB);
+      if (soloPlaca) setPError("La placa está bien, pero el código no coincide. Revisa el código de seguimiento (aparece en tu cotización) o escríbenos por WhatsApp.");
+      else setPError("No encontramos un trámite con esa placa. Verifica los datos o escríbenos por WhatsApp.");
+      return;
+    }
+    setPResultado(c);
+  }
+
+  const filtradas = useMemo(() => {
+    const q = busqueda.toLowerCase().trim();
+    const finalizado = (c) => c.estado === ESTADO_FINAL && !esCotizacion(c);
+    return db.cotizaciones.filter((c) => {
+      const matchQ = !q || [c.numero, c.codigo, c.cliente.nombre, c.cliente.doc, c.cliente.tel, c.vehiculo.placa, c.fecha]
+        .some((v) => (v || "").toLowerCase().includes(q));
+      const matchE = !filtroEstado || c.estado === filtroEstado;
+      let enSeccion;
+      if (vista === "cotizaciones") enSeccion = esCotizacion(c);
+      else if (vista === "archivados") enSeccion = finalizado(c);
+      else enSeccion = !esCotizacion(c) && (!finalizado(c) || filtroEstado === ESTADO_FINAL); // trámites activos
+      return matchQ && matchE && enSeccion;
+    });
+  }, [db, busqueda, filtroEstado, vista]);
+
+  const stats = useMemo(() => {
+    const cs = db.cotizaciones.filter((c)=>!esCotizacion(c));
+    const cuenta = (e) => cs.filter((c)=>c.estado===e).length;
+    return {
+      total: cs.length,
+      cotizaciones: db.cotizaciones.filter((c)=>esCotizacion(c)).length,
+      enProceso: cs.filter((c) => c.estado !== ESTADO_FINAL).length,
+      pendiente: cuenta("Paquete pendiente"),
+      agendamiento: cuenta("Trámite en agendamiento"),
+      enviados: cuenta("Paquete enviado"),
+      retenidos: cuenta(RETENIDO),
+      entregados: cuenta(ESTADO_FINAL),
+    };
+  }, [db]);
+
+  const irNueva = () => { setVista("elegirTipo"); };
+  const nuevoTramite = () => { setForm(cotVacia("tramite")); setVista("form"); };
+  const nuevaCotizacion = () => { setForm(cotVacia("cotizacion")); setVista("form"); };
+  const salir = () => setVista("login");
+
+  if (cargando) return <div style={{minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:"#F4F6FA", fontFamily:"'Segoe UI',system-ui,sans-serif", color:NAVY, fontWeight:700}}>Cargando MoviGestión Luz…</div>;
+  if (modoApp === "caja") return <CajaApp onSalirCaja={()=>{ setModoApp("admin"); setVista("login"); setPin(""); }} />;
+
+  /* ================= LOGIN ================= */
+  if (vista === "login") return (
+    <div style={{minHeight:"100vh", background:`linear-gradient(150deg, ${NAVY} 0%, #12305F 55%, ${BLUE} 130%)`, display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Segoe UI',system-ui,sans-serif", padding:20}}>
+      <div style={{width:"100%", maxWidth:400}}>
+        <div style={{textAlign:"center", marginBottom:22, display:"flex", justifyContent:"center"}}>
+          <div style={{background:"#fff", borderRadius:14, padding:"14px 22px"}}><img src={LOGO} alt="MoviGestión Luz" style={{height:48, display:"block"}} /></div>
+        </div>
+        <div style={{...S.card, padding:28}}>
+          <h2 style={{...S.h2, marginBottom:4}}>Acceso administrativo</h2>
+          <p style={{fontSize:13.5, color:"#5A6478", marginTop:4, marginBottom:18}}>Ingresa el PIN del equipo para gestionar cotizaciones y trámites.</p>
+          <Campo label="PIN de acceso">
+            <input style={S.input} type="password" value={pin} onChange={(e)=>{setPin(e.target.value); setErrPin("");}}
+              onKeyDown={(e)=>{ if(e.key==="Enter"){ const p=pin.trim().toUpperCase(); if(p===PIN_CAJA){ setModoApp("caja"); setPin(""); } else if(p===PIN_ADMIN){ setModoApp("admin"); setVista("dashboard"); setPin(""); } else setErrPin("PIN incorrecto. Intenta de nuevo."); }}}
+              placeholder="••••••••" />
+          </Campo>
+          {errPin && <div style={{color:"#B3372A", fontSize:13, marginBottom:10, fontWeight:600}}>{errPin}</div>}
+          <button style={{...S.btnP, width:"100%"}} onClick={()=>{ const p=pin.trim().toUpperCase(); if(p===PIN_CAJA){ setModoApp("caja"); setPin(""); } else if(p===PIN_ADMIN){ setModoApp("admin"); setVista("dashboard"); setPin(""); } else setErrPin("PIN incorrecto. Intenta de nuevo."); }}>Entrar</button>
+        </div>
+        <div style={{...S.card, padding:20, marginTop:14, textAlign:"center"}}>
+          <div style={{fontWeight:800, color:NAVY, fontSize:15, marginBottom:4}}>¿Eres cliente?</div>
+          <p style={{fontSize:13, color:"#5A6478", margin:"0 0 12px"}}>Consulta el estado de tu trámite con tu placa y código de seguimiento.</p>
+          <button style={{...S.btnS, width:"100%"}} onClick={()=>{setVista("portal"); setPResultado(null); setPPlaca(""); setPCodigo(""); setPError("");}}>Consultar mi trámite</button>
+        </div>
+      </div>
+    </div>
+  );
+
+  /* ================= PORTAL CLIENTE ================= */
+  if (vista === "portal") {
+    const c = pResultado; const t = c ? totales(c) : null;
+    const idxEstado = c ? PASOS.indexOf(c.estado) : -1;
+    const ultimoPaso = c ? [...(c.historial||[])].reverse().find((h)=> PASOS.includes(h.a)) : null;
+    const idxRetenido = c && c.estado === RETENIDO && ultimoPaso ? PASOS.indexOf(ultimoPaso.a) : idxEstado;
+    const motivoRetencion = c && c.estado === RETENIDO ? ([...(c.historial||[])].reverse().find((h)=>h.a===RETENIDO && h.obs && h.visible)?.obs || "") : "";
+    return (
+      <div style={{minHeight:"100vh", background:"#F4F6FA", fontFamily:"'Segoe UI',system-ui,sans-serif"}}>
+        <div style={{background:NAVY, padding:"14px 20px", display:"flex", justifyContent:"space-between", alignItems:"center"}}>
+          <Logo dark />
+          <button style={{background:"transparent", border:"1.5px solid #3A5588", color:"#C7D6F0", padding:"8px 14px", borderRadius:9, fontSize:13, fontWeight:600, cursor:"pointer"}} onClick={()=>setVista("login")}>Volver</button>
+        </div>
+        <div style={{maxWidth:640, margin:"0 auto", padding:"28px 16px"}}>
+          {!c && <>
+            <h2 style={{...S.h2, fontSize:24, marginBottom:6}}>Consulta tu trámite</h2>
+            <p style={{color:"#5A6478", fontSize:14.5, marginTop:0, marginBottom:20}}>Ingresa la placa de tu vehículo y el código de seguimiento que te entregó tu asesor.</p>
+            <div style={S.card}>
+              <Campo label="Placa del vehículo"><input style={{...S.input, textTransform:"uppercase", letterSpacing:".1em", fontWeight:700}} value={pPlaca} onChange={(e)=>setPPlaca(e.target.value)} placeholder="ABC123" /></Campo>
+              <Campo label="Código de seguimiento"><input style={{...S.input, textTransform:"uppercase", letterSpacing:".1em", fontWeight:700}} value={pCodigo} onChange={(e)=>setPCodigo(e.target.value)} placeholder="X4K9PT" /></Campo>
+              {pError && <div style={{background:"#FBE7E4", color:"#B3372A", padding:"10px 14px", borderRadius:10, fontSize:13.5, marginBottom:12}}>{pError}</div>}
+              <button style={{...S.btnP, width:"100%"}} onClick={consultarPortal}>Ver estado del trámite</button>
+              <a href={`https://wa.me/${WHATSAPP}?text=${encodeURIComponent("Hola MoviGestión Luz, necesito ayuda con mi trámite.")}`} target="_blank" rel="noreferrer"
+                style={{display:"block", textAlign:"center", marginTop:14, color:BLUE, fontWeight:700, fontSize:14, textDecoration:"none"}}>¿Necesitas ayuda? Escríbenos por WhatsApp</a>
+            </div>
+          </>}
+          {c && esCotizacion(c) && <>
+            <div style={{...S.card, marginBottom:14, borderTop:"4px solid "+GOLD, textAlign:"center"}}>
+              <div style={{fontSize:32, marginBottom:4}}>🧾</div>
+              <h2 style={{...S.h2, fontSize:22, marginBottom:4}}>Cotización {c.numero}</h2>
+              <div style={{fontSize:14, color:"#5A6478"}}>Placa <b style={{color:NAVY, letterSpacing:".08em"}}>{c.vehiculo.placa}</b></div>
+              <div style={{marginTop:14, background:"#FBF7EC", borderRadius:12, padding:"16px"}}>
+                <div style={{fontSize:12.5, fontWeight:700, color:"#8A6D1B", textTransform:"uppercase", letterSpacing:".05em"}}>Valor estimado</div>
+                <div style={{fontSize:32, fontWeight:900, color:NAVY, marginTop:2}}>{fmt(totales(c).total)}</div>
+              </div>
+            </div>
+            <div style={{...S.card, marginBottom:14}}>
+              <div style={{fontWeight:800, color:NAVY, marginBottom:12}}>Datos del vehículo</div>
+              <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, fontSize:14}}>
+                <div><span style={S.label}>Placa</span><b style={{color:NAVY, letterSpacing:".08em"}}>{c.vehiculo.placa}</b></div>
+                <div><span style={S.label}>Tipo</span>{c.vehiculo.tipo}</div>
+                {(c.vehiculo.marca || c.vehiculo.linea || c.vehiculo.modelo) && <div style={{gridColumn:"1 / -1"}}><span style={S.label}>Vehículo</span>{c.vehiculo.marca} {c.vehiculo.linea} {c.vehiculo.modelo}</div>}
+                <div><span style={S.label}>Servicio</span>{c.vehiculo.servicio}</div>
+                {c.vehiculo.ciudadMat && <div><span style={S.label}>Matriculado en</span>{c.vehiculo.ciudadMat}</div>}
+                <div><span style={S.label}>Ciudad del trámite</span>{c.ciudad}</div>
+                {c.vence && <div><span style={S.label}>Válida hasta</span>{c.vence}</div>}
+              </div>
+            </div>
+            {totales(c).sub > 0 && <div style={{...S.card, marginBottom:14}}>
+              <div style={{fontWeight:800, color:NAVY, marginBottom:12}}>Detalle de la cotización</div>
+              {c.conceptos.filter((x)=>Number(x.valor)>0).map((x, i) => (
+                <div key={i} style={{display:"flex", justifyContent:"space-between", fontSize:14, padding:"7px 0", borderBottom:"1px solid #EEF1F7"}}>
+                  <span style={{color:NAVY}}>{x.desc}</span>
+                  <span style={{color:NAVY, fontWeight:600}}>{fmt((Number(x.cant)||1)*(Number(x.valor)||0))}</span>
+                </div>
+              ))}
+              {Number(c.descuento) > 0 && <div style={{display:"flex", justifyContent:"space-between", fontSize:14, padding:"7px 0", borderBottom:"1px solid #EEF1F7", color:"#B3372A"}}>
+                <span>Descuento</span><span>−{fmt(c.descuento)}</span>
+              </div>}
+              <div style={{display:"flex", justifyContent:"space-between", fontSize:16, paddingTop:10, marginTop:2}}>
+                <b style={{color:NAVY}}>Total estimado</b><b style={{color:NAVY}}>{fmt(totales(c).total)}</b>
+              </div>
+              {totales(c).abono > 0 && <>
+                <div style={{display:"flex", justifyContent:"space-between", fontSize:13.5, marginTop:6, color:"#5A6478"}}><span>Abonado</span><span style={{color:"#1B7A3D"}}>{fmt(totales(c).abono)}</span></div>
+                <div style={{display:"flex", justifyContent:"space-between", fontSize:14, marginTop:2}}><b>Saldo</b><b style={{color: totales(c).saldo>0?"#B3372A":"#1B7A3D"}}>{fmt(totales(c).saldo)}</b></div>
+              </>}
+            </div>}
+            <div style={{...S.card, marginBottom:14}}>
+              <div style={{fontWeight:800, color:NAVY, marginBottom:6}}>Así sería tu proceso con nosotros</div>
+              <div style={{fontSize:13.5, color:"#5A6478", marginBottom:14}}>Nosotros hacemos todo el trámite por ti. Este es el camino que seguiríamos:</div>
+              {PASOS.map((e, i) => (
+                <div key={e} style={{display:"flex", gap:14, alignItems:"flex-start", opacity:.9}}>
+                  <div style={{display:"flex", flexDirection:"column", alignItems:"center"}}>
+                    <div style={{width:26, height:26, borderRadius:"50%", background: COLOR_ESTADO[e] ? COLOR_ESTADO[e].col : BLUE, color:"#fff", fontSize:13, fontWeight:800, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>{i+1}</div>
+                    {i < PASOS.length-1 && <div style={{width:3, height:26, background:"#DDE3EE"}} />}
+                  </div>
+                  <div style={{fontSize:14.5, fontWeight:600, color:NAVY, paddingTop:3}}>{e}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{...S.card, marginBottom:14, background:NAVY, textAlign:"center"}}>
+              <div style={{color:"#fff", fontSize:16, fontWeight:800, marginBottom:4}}>¿List@ para realizar tu trámite?</div>
+              <div style={{color:"#C7D6F0", fontSize:13.5, marginBottom:14}}>Sin filas, sin vueltas. Nosotros nos encargamos de todo.</div>
+              <a href={`https://wa.me/${WHATSAPP}?text=${encodeURIComponent("Hola MoviGestión Luz, quiero realizar mi trámite de la cotización "+c.numero+" (placa "+c.vehiculo.placa+"). Valor: "+fmt(totales(c).total)+".")}`} target="_blank" rel="noreferrer"
+                style={{background:"#25D366", color:"#fff", display:"block", textAlign:"center", textDecoration:"none", fontWeight:800, fontSize:16.5, padding:"15px", borderRadius:12, boxShadow:"0 2px 8px rgba(37,211,102,.35)"}}>
+                Quiero realizar mi trámite
+              </a>
+            </div>
+            <button style={{...S.btnS, width:"100%"}} onClick={()=>{setPResultado(null);}}>Consultar otra placa</button>
+          </>}
+          {c && !esCotizacion(c) && <>
+            <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14, flexWrap:"wrap", gap:8}}>
+              <h2 style={S.h2}>Trámite {c.numero}</h2>
+              <span style={colorEstado(c.estado)}>{c.estado}</span>
+            </div>
+            <div style={{...S.card, marginBottom:14}}>
+              <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, fontSize:14}}>
+                <div><span style={S.label}>Placa</span><b style={{color:NAVY, fontSize:16, letterSpacing:".08em"}}>{c.vehiculo.placa}</b></div>
+                <div><span style={S.label}>Trámite(s)</span><b style={{color:NAVY}}>{tiposTexto(c)}</b></div>
+                <div><span style={S.label}>Ciudad</span>{c.ciudad}</div>
+                <div><span style={S.label}>Entrega estimada</span>{c.tramite.fechaEstimada || "Por definir"}</div>
+              </div>
+            </div>
+            {c.estado === RETENIDO && <div style={{...S.card, marginBottom:14, borderLeft:"4px solid #B3372A", background:"#FFF6F5"}}>
+              <div style={{fontWeight:800, color:"#B3372A", marginBottom:6}}>Trámite retenido en tránsito</div>
+              <div style={{fontSize:14, color:NAVY}}>{motivoRetencion ? motivoRetencion : "El organismo de tránsito devolvió el trámite. Tu asesor se comunicará contigo con los detalles."}</div>
+            </div>}
+            <div style={{...S.card, marginBottom:14}}>
+              <div style={{fontWeight:800, color:NAVY, marginBottom:16}}>Progreso del trámite</div>
+              {PASOS.map((e, i) => {
+                const marca = c.estado === RETENIDO ? idxRetenido : idxEstado;
+                const done = i < marca, actual = i === marca;
+                const col = COLOR_ESTADO[e] ? COLOR_ESTADO[e].col : BLUE;
+                return (
+                  <div key={e} style={{display:"flex", gap:14, alignItems:"flex-start", opacity: done||actual ? 1 : .45}}>
+                    <div style={{display:"flex", flexDirection:"column", alignItems:"center"}}>
+                      <div style={{width:26, height:26, borderRadius:"50%", background: actual ? col : done ? "#1B7A3D" : "#DDE3EE", color:"#fff", fontSize:13, fontWeight:800, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>{done ? "✓" : i+1}</div>
+                      {i < PASOS.length-1 && <div style={{width:3, height:30, background: done ? "#1B7A3D" : "#DDE3EE"}} />}
+                    </div>
+                    <div style={{fontSize:15, fontWeight: actual ? 800 : 500, color: actual ? col : NAVY, paddingTop:3}}>{e}</div>
+                  </div>
+                );
+              })}
+              {c.estado === "Entregado" && <div style={{marginTop:10, ...tag("#E3F6E8","#1B7A3D"), display:"inline-block"}}>Trámite entregado</div>}
+            </div>
+            {docsFaltantes(c).length > 0 && <div style={{...S.card, marginBottom:14, borderLeft:"4px solid #E0A800"}}>
+              <div style={{fontWeight:800, color:"#9A6B00", marginBottom:10}}>Documentos que faltan por entregar</div>
+              <div style={{display:"grid", gap:8}}>
+                {docsFaltantes(c).map((r) => (
+                  <div key={r} style={{display:"flex", alignItems:"center", gap:10, fontSize:14}}>
+                    <span style={{width:20, height:20, borderRadius:5, background:"#fff", border:"2px solid #E0A800", flexShrink:0}} />{r}
+                  </div>
+                ))}
+              </div>
+            </div>}
+            {getObs(c).filter((o)=>o.visible).length > 0 && <div style={{...S.card, marginBottom:14}}>
+              <div style={{fontWeight:800, color:NAVY, marginBottom:10}}>Pendientes y observaciones</div>
+              {getObs(c).filter((o)=>o.visible).map((o) => (
+                <div key={o.id} style={{display:"flex", alignItems:"center", gap:10, padding:"7px 0", borderBottom:"1px solid #EEF1F7", fontSize:14}}>
+                  <span style={{width:20, height:20, borderRadius:5, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center",
+                    background:o.hecho?"#1B7A3D":"#fff", border:"2px solid "+(o.hecho?"#1B7A3D":"#C9D2E2"), color:"#fff", fontSize:12, fontWeight:800}}>{o.hecho?"✓":""}</span>
+                  <span style={{textDecoration:o.hecho?"line-through":"none", color:o.hecho?"#9AA3B2":NAVY}}>{o.texto}</span>
+                </div>
+              ))}
+            </div>}
+            {c.tramite.docsPendientes && <div style={{...S.card, marginBottom:14, borderLeft:"4px solid #E0A800"}}>
+              <div style={{fontWeight:800, color:"#9A6B00", marginBottom:6}}>Nota adicional</div>
+              <div style={{fontSize:14, whiteSpace:"pre-wrap"}}>{c.tramite.docsPendientes}</div>
+            </div>}
+            <div style={{...S.card, marginBottom:14}}>
+              <div style={{fontWeight:800, color:NAVY, marginBottom:10}}>Pagos</div>
+              <div style={{display:"flex", justifyContent:"space-between", fontSize:14, marginBottom:6}}><span>Total del trámite</span><b>{fmt(t.total)}</b></div>
+              <div style={{display:"flex", justifyContent:"space-between", fontSize:14, marginBottom:6}}><span>Abonado</span><b style={{color:"#1B7A3D"}}>{fmt(t.abono)}</b></div>
+              <div style={{display:"flex", justifyContent:"space-between", fontSize:15, borderTop:"1px solid #E8ECF3", paddingTop:8}}><b>Saldo pendiente</b><b style={{color: t.saldo>0 ? "#B3372A" : "#1B7A3D"}}>{fmt(t.saldo)}</b></div>
+            </div>
+            {c.historial.filter((h)=>h.visible && h.obs).length > 0 && <div style={{...S.card, marginBottom:14}}>
+              <div style={{fontWeight:800, color:NAVY, marginBottom:10}}>Novedades</div>
+              {c.historial.filter((h)=>h.visible && h.obs).slice().reverse().map((h, i) => (
+                <div key={i} style={{borderBottom:"1px solid #EEF1F7", padding:"8px 0", fontSize:13.5}}>
+                  <div style={{color:"#5A6478", fontSize:12}}>{h.fecha} · {h.a}</div>
+                  <div>{h.obs}</div>
+                </div>
+              ))}
+            </div>}
+            <a href={`https://wa.me/${WHATSAPP}?text=${encodeURIComponent("Hola, consulto por mi trámite "+c.numero+" (placa "+c.vehiculo.placa+").")}`} target="_blank" rel="noreferrer"
+              style={{...S.btnP, display:"block", textAlign:"center", textDecoration:"none", boxSizing:"border-box"}}>Escribir por WhatsApp</a>
+            <button style={{...S.btnS, width:"100%", marginTop:10}} onClick={()=>{setPResultado(null);}}>Consultar otra placa</button>
+          </>}
+        </div>
+      </div>
+    );
+  }
+
+  /* ================= ELEGIR TIPO ================= */
+  if (vista === "elegirTipo") return (
+    <Shell vista="form" setVista={setVista} onNueva={irNueva} onSalir={salir} toast={toast}>
+      <h2 style={{...S.h2, fontSize:26, marginBottom:6}}>¿Qué deseas crear?</h2>
+      <p style={{fontSize:14.5, color:"#5A6478", marginTop:0, marginBottom:20}}>Una cotización es solo el estimado de precio. Un trámite ya incluye documentos y seguimiento completo.</p>
+      <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(280px, 1fr))", gap:16}}>
+        <div onClick={nuevaCotizacion} style={{...S.card, cursor:"pointer", borderTop:"4px solid "+GOLD}}>
+          <div style={{fontSize:30, marginBottom:6}}>🧾</div>
+          <div style={{fontWeight:800, color:NAVY, fontSize:18, marginBottom:6}}>Nueva cotización</div>
+          <div style={{fontSize:14, color:"#5A6478", lineHeight:1.5}}>Solo el estimado de precio para el cliente. Sin documentos ni etapas. Genera factura de cotización (COT). Luego se puede convertir en trámite.</div>
+        </div>
+        <div onClick={nuevoTramite} style={{...S.card, cursor:"pointer", borderTop:"4px solid "+BLUE}}>
+          <div style={{fontSize:30, marginBottom:6}}>🚗</div>
+          <div style={{fontWeight:800, color:NAVY, fontSize:18, marginBottom:6}}>Nuevo trámite</div>
+          <div style={{fontSize:14, color:"#5A6478", lineHeight:1.5}}>Proceso completo: documentos, SOAT/tecnomecánica, etapas, pagos y seguimiento (MGL).</div>
+        </div>
+      </div>
+    </Shell>
+  );
+
+  /* ================= DASHBOARD ================= */
+  if (vista === "dashboard") {
+    const recientes = db.cotizaciones.filter((c)=>!esCotizacion(c) && c.estado !== ESTADO_FINAL).slice(0, 6);
+    const Kpi = ({ label, valor, color }) => (
+      <div style={{...S.card, padding:"16px 18px"}}>
+        <div style={{fontSize:11.5, fontWeight:700, color:"#5A6478", textTransform:"uppercase", letterSpacing:".05em", lineHeight:1.3, minHeight:30}}>{label}</div>
+        <div style={{fontSize:34, fontWeight:900, color: color || NAVY, marginTop:6}}>{valor}</div>
+      </div>
+    );
+    return (
+      <Shell vista={vista} setVista={setVista} onNueva={irNueva} onSalir={salir} toast={toast}>
+        <h2 style={{...S.h2, fontSize:26, marginBottom:16}}>Panel operativo</h2>
+        {hayBorrador && <div style={{...S.card, marginBottom:16, borderLeft:"4px solid "+BLUE, display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:10}}>
+          <div style={{fontSize:14.5, color:NAVY}}><b>Tienes una cotización sin terminar.</b> Quedó guardada como borrador.</div>
+          <div style={{display:"flex", gap:8}}>
+            <button style={S.btnP} onClick={recuperarBorrador}>Recuperar borrador</button>
+            <button style={S.btnS} onClick={limpiarBorrador}>Descartar</button>
+          </div>
+        </div>}
+        <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(180px, 1fr))", gap:16, marginBottom:22}}>
+          <Kpi label="Trámites totales" valor={stats.total} />
+          <Kpi label="Cotizaciones" valor={stats.cotizaciones} color={GOLD} />
+          <Kpi label="En proceso" valor={stats.enProceso} color={BLUE} />
+          <Kpi label="Paquete pendiente" valor={stats.pendiente} color={stats.pendiente>0?"#9A6B00":NAVY} />
+          <Kpi label="En agendamiento" valor={stats.agendamiento} color="#14285A" />
+          <Kpi label="Paquetes enviados" valor={stats.enviados} color="#C43D8A" />
+          <Kpi label="Retenidos" valor={stats.retenidos} color={stats.retenidos>0?"#B3372A":NAVY} />
+          <Kpi label="Entregados" valor={stats.entregados} color="#1B7A3D" />
+        </div>
+
+        {cajaData && <div style={{...S.card, marginBottom:22}}>
+          <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14, flexWrap:"wrap", gap:8}}>
+            <div style={{fontWeight:800, color:NAVY, fontSize:15.5}}>💰 Caja de la empresa</div>
+            <button style={{...S.btnS, padding:"8px 16px"}} onClick={()=>{ setPin(""); setModoApp("caja"); }}>Abrir caja completa</button>
+          </div>
+          {(()=>{
+            const cuentasCaja = (cajaData.config && cajaData.config.cuentas) || ["Efectivo","Nequi","Davivienda","Bancolombia"];
+            const saldosMini = {}; cuentasCaja.forEach(c=> saldosMini[c] = Number((cajaData.cuentas||{})[c] || 0));
+            (cajaData.movimientos||[]).forEach((m)=>{
+              if (m.tipo==="ingreso") saldosMini[m.cuenta] = (saldosMini[m.cuenta]||0)+Number(m.monto);
+              else if (m.tipo==="egreso") saldosMini[m.cuenta] = (saldosMini[m.cuenta]||0)-Number(m.monto);
+              else if (m.tipo==="transferencia") { saldosMini[m.cuenta]=(saldosMini[m.cuenta]||0)-Number(m.monto); saldosMini[m.cuentaDest]=(saldosMini[m.cuentaDest]||0)+Number(m.monto); }
+            });
+            const totalCaja = Object.values(saldosMini).reduce((a,b)=>a+b,0);
+            let canjeCobrado=0;
+            (db.cotizaciones||[]).filter(c=>c.modo!=="cotizacion").forEach((c)=>{
+              let ganancia=0, canje=0;
+              (c.conceptos||[]).forEach((x)=>{ const v=(Number(x.cant)||1)*(Number(x.valor)||0); if(!v) return;
+                const GAN=["Honorarios","Honorarios de impuestos","Papelería","Improntas"];
+                if(GAN.includes(x.desc)) ganancia+=v; else canje+=v; });
+              const total=ganancia+canje; const abono=(Number(c.abonoEfectivo)||0)+(Number(c.abonoTransferencia)||0);
+              const prop = total>0 ? Math.min(1, abono/total) : 0; canjeCobrado += canje*prop;
+            });
+            const pagadoATransitoMini = (cajaData.movimientos||[]).filter(m=>m.categoria==="Pago a tránsito (canje)").reduce((a,m)=>a+Number(m.monto),0);
+            const enProcesoMini = Math.max(0, canjeCobrado - pagadoATransitoMini);
+            return (
+              <>
+                <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(160px,1fr))", gap:12, marginBottom:14}}>
+                  <div><div style={S.label}>Dinero en caja</div><div style={{fontSize:19, fontWeight:900, color:NAVY}}>{fmt(totalCaja)}</div></div>
+                  <div><div style={S.label}>En proceso (canje)</div><div style={{fontSize:19, fontWeight:900, color:"#6B2FB3"}}>{fmt(enProcesoMini)}</div></div>
+                  <div><div style={S.label}>Disponible libre</div><div style={{fontSize:19, fontWeight:900, color:"#1B7A3D"}}>{fmt(Math.max(0, totalCaja-enProcesoMini))}</div></div>
+                </div>
+                <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(140px,1fr))", gap:10, paddingTop:12, borderTop:"1px solid #EEF1F7"}}>
+                  {cuentasCaja.map((cta)=>(
+                    <div key={cta} style={{fontSize:13}}>
+                      <span style={{color:"#5A6478"}}>{cta}: </span>
+                      <b style={{color:NAVY}}>{fmt(saldosMini[cta]||0)}</b>
+                    </div>
+                  ))}
+                </div>
+              </>
+            );
+          })()}
+        </div>}
+
+        <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12}}>
+          <h3 style={{...S.h2, fontSize:17}}>Actividad reciente</h3>
+          <button style={S.btnP} onClick={irNueva}>+ Nueva cotización</button>
+        </div>
+        {recientes.length === 0 && <div style={{...S.card, textAlign:"center", padding:40, color:"#5A6478"}}>
+          Aún no hay cotizaciones. Crea la primera con el botón <b>+ Nueva cotización</b>.
+        </div>}
+        {recientes.map((c) => { const t = totales(c); return (
+          <div key={c.id} onClick={()=>{setSel(c); setVista("detalle");}} style={{...S.card, marginBottom:10, cursor:"pointer", display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:10}}>
+            <div>
+              <div style={{fontWeight:800, color:NAVY}}>{c.numero} · {c.vehiculo.placa} <span style={{fontWeight:500, color:"#5A6478"}}>· {c.cliente.nombre}</span></div>
+              <div style={{fontSize:13, color:"#5A6478", marginTop:2}}>{tiposTexto(c)} · {c.fecha} · Saldo {fmt(t.saldo)}</div>
+            </div>
+            <span style={colorEstado(c.estado)}>{c.estado}</span>
+          </div>);})}
+      </Shell>
+    );
+  }
+
+  /* ================= RESPALDO ================= */
+  if (vista === "ajustes") return (
+    <Shell vista={vista} setVista={setVista} onNueva={irNueva} onSalir={salir} toast={toast}>
+      <h2 style={{...S.h2, fontSize:26, marginBottom:16}}>Respaldo de información</h2>
+      <Sec titulo="Descargar respaldo">
+        <p style={{fontSize:14, color:"#5A6478", marginTop:0}}>
+          Guarda una copia de todas las cotizaciones en un archivo. Recomendado una vez por semana:
+          descárgalo y súbelo a Drive o envíalo por WhatsApp.
+        </p>
+        <div style={{fontSize:14, marginBottom:14}}>Cotizaciones guardadas actualmente: <b>{db.cotizaciones.length}</b></div>
+        <button style={S.btnP} onClick={descargarRespaldo}>Descargar respaldo</button>
+      </Sec>
+      <Sec titulo="Restaurar desde respaldo">
+        <p style={{fontSize:14, color:"#5A6478", marginTop:0}}>Abre el archivo de respaldo, copia todo su contenido y pégalo aquí.</p>
+        <textarea style={{...S.input, minHeight:120, fontFamily:"monospace", fontSize:12}} value={textoRestaurar} onChange={(e)=>setTextoRestaurar(e.target.value)} placeholder='{"cotizaciones":[…]}' />
+        <button style={{...S.btnS, marginTop:10}} onClick={restaurarRespaldo}>Restaurar información</button>
+      </Sec>
+    </Shell>
+  );
+
+  /* ================= LISTA ================= */
+  if (vista === "lista" || vista === "archivados" || vista === "cotizaciones") return (
+    <Shell vista={vista} setVista={setVista} onNueva={irNueva} onSalir={salir} toast={toast}>
+      <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14, flexWrap:"wrap", gap:10}}>
+        <h2 style={{...S.h2, fontSize:26}}>{vista === "archivados" ? "Trámites finalizados" : vista === "cotizaciones" ? "Cotizaciones" : "Trámites"}</h2>
+        <button style={S.btnP} onClick={irNueva}>+ Nuevo</button>
+      </div>
+      {vista === "archivados" && <div style={{fontSize:14, color:"#5A6478", marginBottom:14}}>Aquí quedan almacenados los trámites entregados. Salen de la vista principal para no estorbar el día a día.</div>}
+      {vista === "cotizaciones" && <div style={{fontSize:14, color:"#5A6478", marginBottom:14}}>Estimados de precio (COT). No tienen documentos ni seguimiento hasta convertirlos en trámite.</div>}
+      <div style={{display:"flex", gap:10, marginBottom:16, flexWrap:"wrap"}}>
+        <input style={{...S.input, flex:"1 1 320px", maxWidth:520}} placeholder="Buscar por placa, nombre, documento, teléfono…" value={busqueda} onChange={(e)=>setBusqueda(e.target.value)} />
+        {vista === "lista" && <select style={{...S.input, flex:"0 1 260px"}} value={filtroEstado} onChange={(e)=>setFiltroEstado(e.target.value)}>
+          <option value="">Todos los estados</option>
+          {ESTADOS.map((e)=><option key={e}>{e}</option>)}
+        </select>}
+      </div>
+      {filtradas.length === 0 && <div style={{...S.card, textAlign:"center", padding:36, color:"#5A6478"}}>{vista === "archivados" ? "Aún no hay trámites finalizados." : vista === "cotizaciones" ? "Aún no hay cotizaciones. Crea una con “+ Nuevo”." : "Sin resultados para esta búsqueda."}</div>}
+      {filtradas.map((c) => { const t = totales(c); const efe=Number(c.abonoEfectivo)||0, tra=Number(c.abonoTransferencia)||0; return (
+        <div key={c.id} onClick={()=>{setSel(c); setVista("detalle");}} style={{...S.card, marginBottom:10, cursor:"pointer", display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:10, borderLeft: esCotizacion(c) ? "4px solid "+GOLD : "1px solid #E8ECF3"}}>
+          <div>
+            <div style={{fontWeight:800, color:NAVY, fontSize:15}}>{c.numero} · <span style={{letterSpacing:".06em"}}>{c.vehiculo.placa}</span></div>
+            <div style={{fontSize:13, color:"#5A6478", marginTop:2}}>{c.cliente.nombre} · {esCotizacion(c) ? "Cotización" : tiposTexto(c)} · {c.fecha}</div>
+            {!esCotizacion(c) && (efe>0 || tra>0) && <div style={{fontSize:12, color:"#5A6478", marginTop:3}}>
+              {efe>0 && <span style={{...tag("#EAF6EE","#1B7A3D"), fontSize:11, marginRight:5}}>Efectivo {fmt(efe)}</span>}
+              {tra>0 && <span style={{...tag("#EAF1FE","#1E6FEB"), fontSize:11}}>{c.bancoTransferencia||"Nequi"} {fmt(tra)}</span>}
+            </div>}
+          </div>
+          <div style={{textAlign:"right"}}>
+            {esCotizacion(c) ? <span style={tag("#FBF3DE","#8A6D1B")}>Cotización</span> : <span style={colorEstado(c.estado)}>{c.estado}</span>}
+            <div style={{fontSize:13, marginTop:4, color: t.saldo>0 ? "#B3372A" : "#1B7A3D", fontWeight:700}}>{esCotizacion(c) ? "Total "+fmt(t.total) : "Saldo "+fmt(t.saldo)}</div>
+          </div>
+        </div>);})}
+    </Shell>
+  );
+
+  /* ================= FORMULARIO ================= */
+  if (vista === "form" && form) {
+    const t = totales(form);
+    return (
+      <Shell vista={vista} setVista={setVista} onNueva={irNueva} onSalir={salir} toast={toast}>
+        <h2 style={{...S.h2, fontSize:26, marginBottom:16}}>{form.numero ? "Editar " + form.numero : (esCotizacion(form) ? "Nueva cotización" : "Nuevo trámite")}</h2>
+        <Sec titulo="Datos generales">
+          <G2>
+            <Campo label="Fecha"><input type="date" style={S.input} value={form.fecha} onChange={(e)=>upd("fecha", e.target.value)} /></Campo>
+            <Campo label="Válida hasta"><input type="date" style={S.input} value={form.vence} onChange={(e)=>upd("vence", e.target.value)} /></Campo>
+            <Campo label="Asesor"><input style={S.input} value={form.asesor} onChange={(e)=>upd("asesor", e.target.value)} placeholder="Nombre del asesor" /></Campo>
+            <Campo label="Ciudad del trámite">
+              <input style={S.input} list="ciudades" value={form.ciudad} onChange={(e)=>{
+                const ciudad = e.target.value;
+                setForm((f)=>({ ...f, ciudad, conceptos: normalizarConceptos(aplicarCiudad(f.conceptos, ciudad)) }));
+              }} />
+              <datalist id="ciudades"><option value="Ibagué" /></datalist>
+              {esIbague(form.ciudad) && <div style={{fontSize:12, color:"#1B7A3D", fontWeight:600, marginTop:4}}>Tarifas de Ibagué aplicadas automáticamente</div>}
+            </Campo>
+          </G2>
+        </Sec>
+        <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(300px, 1fr))", gap:18}}>
+        <Sec titulo="Cliente">
+          <G2>
+            <Campo label="Nombre completo *"><input style={S.input} value={form.cliente.nombre} onChange={(e)=>upd("cliente.nombre", e.target.value)} /></Campo>
+            <Campo label="Tipo de documento">
+              <select style={S.input} value={form.cliente.tipoDoc} onChange={(e)=>upd("cliente.tipoDoc", e.target.value)}>
+                <option>CC</option><option>CE</option><option>NIT</option><option>Pasaporte</option>
+              </select></Campo>
+            <Campo label="Número de documento"><input style={S.input} inputMode="numeric" value={form.cliente.doc} onChange={(e)=>upd("cliente.doc", e.target.value)} /></Campo>
+            <Campo label="Teléfono / WhatsApp"><input style={S.input} inputMode="tel" value={form.cliente.tel} onChange={(e)=>upd("cliente.tel", e.target.value)} /></Campo>
+            <Campo label="Dirección"><input style={S.input} value={form.cliente.dir} onChange={(e)=>upd("cliente.dir", e.target.value)} /></Campo>
+          </G2>
+        </Sec>
+        <Sec titulo="Vehículo">
+          <G2>
+            <Campo label="Placa *"><input style={{...S.input, textTransform:"uppercase", fontWeight:700, letterSpacing:".08em"}} value={form.vehiculo.placa} onChange={(e)=>upd("vehiculo.placa", e.target.value)} placeholder="ABC123" /></Campo>
+            <Campo label="Marca"><input style={S.input} value={form.vehiculo.marca} onChange={(e)=>upd("vehiculo.marca", e.target.value)} /></Campo>
+            <Campo label="Línea"><input style={S.input} value={form.vehiculo.linea} onChange={(e)=>upd("vehiculo.linea", e.target.value)} /></Campo>
+            <Campo label="Modelo (año)"><input style={S.input} inputMode="numeric" value={form.vehiculo.modelo} onChange={(e)=>upd("vehiculo.modelo", e.target.value)} /></Campo>
+            <Campo label="Tipo">
+              <select style={S.input} value={form.vehiculo.tipo} onChange={(e)=>upd("vehiculo.tipo", e.target.value)}>
+                <option>Automóvil</option><option>Bus</option><option>Buseta</option><option>Camión</option><option>Camioneta</option><option>Campero</option><option>Microbús</option><option>Tractocamión</option><option>Motocicleta</option><option>Motocarro</option><option>Motociclo</option><option>Cuatrimoto</option><option>Volqueta</option><option>Otro</option>
+              </select></Campo>
+            <Campo label="Servicio">
+              <select style={S.input} value={form.vehiculo.servicio} onChange={(e)=>upd("vehiculo.servicio", e.target.value)}>
+                <option>Particular</option><option>Público</option>
+              </select></Campo>
+            <Campo label="Ciudad de matrícula"><input style={S.input} value={form.vehiculo.ciudadMat} onChange={(e)=>upd("vehiculo.ciudadMat", e.target.value)} /></Campo>
+          </G2>
+          <div style={{marginTop:8, borderTop:"1.5px solid #EEF1F7", paddingTop:14}}>
+            <div style={{fontWeight:800, color:NAVY, fontSize:14, marginBottom:10}}>SOAT y Tecnomecánica</div>
+            {[["soat","SOAT"],["tecno","Tecnomecánica"]].map(([k, lbl]) => {
+              const d = form.vehiculo[k] || { tiene:false, desde:"", hasta:"" };
+              return (
+                <div key={k} style={{display:"grid", gridTemplateColumns:"minmax(150px,1fr) 1fr 1fr", gap:12, alignItems:"end", marginBottom:12}}>
+                  <button onClick={()=>upd("vehiculo."+k, { ...d, tiene: !d.tiene })}
+                    style={{display:"flex", alignItems:"center", gap:10, padding:"12px 14px", borderRadius:11,
+                      border:"1.5px solid "+(d.tiene?"#1B7A3D":"#D5DBE7"), background:d.tiene?"#E9F8EE":"#fff",
+                      cursor:"pointer", textAlign:"left", fontSize:14.5, fontWeight:700, color:NAVY}}>
+                    <span style={{width:24, height:24, borderRadius:7, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center",
+                      background:d.tiene?"#1B7A3D":"#fff", border:"2px solid "+(d.tiene?"#1B7A3D":"#C9D2E2"), color:"#fff", fontSize:15, fontWeight:800}}>{d.tiene?"✓":""}</span>
+                    {lbl} {d.tiene ? "(vigente)" : "(no tiene)"}
+                  </button>
+                  <div><label style={S.label}>Desde</label><input type="date" style={{...S.input, opacity:d.tiene?1:.5}} disabled={!d.tiene} value={d.desde} onChange={(e)=>upd("vehiculo."+k, { ...d, desde:e.target.value, hasta: e.target.value ? masUnAnio(e.target.value) : d.hasta })} /></div>
+                  <div><label style={S.label}>Vigente hasta</label><input type="date" style={{...S.input, opacity:d.tiene?1:.5}} disabled={!d.tiene} value={d.hasta} onChange={(e)=>upd("vehiculo."+k, { ...d, hasta:e.target.value })} /></div>
+                </div>
+              );
+            })}
+          </div>
+        </Sec>
+        </div>
+        {!esCotizacion(form) && <Sec titulo="Trámite(s)">
+          <label style={S.label}>Trámites de esta cotización</label>
+          {(form.tramite.tipos || []).map((tp, i) => (
+            <div key={i} style={{display:"grid", gridTemplateColumns:"1fr 40px", gap:8, marginBottom:8, alignItems:"center"}}>
+              <select style={S.input} value={tp} onChange={(e)=>{ const a=[...form.tramite.tipos]; a[i]=e.target.value; upd("tramite.tipos", a); }}>
+                {TIPOS_TRAMITE.map((x)=><option key={x}>{x}</option>)}
+              </select>
+              {form.tramite.tipos.length > 1
+                ? <button style={{...S.btnD, padding:"10px 10px"}} onClick={()=>upd("tramite.tipos", form.tramite.tipos.filter((_,j)=>j!==i))}>✕</button>
+                : <div />}
+            </div>
+          ))}
+          <button style={{...S.btnS, marginBottom:16}} onClick={()=>upd("tramite.tipos", [...(form.tramite.tipos||[]), "Traspaso"])}>+ Agregar otro trámite</button>
+          <G2>
+            <Campo label="Fecha estimada de entrega"><input type="date" style={S.input} value={form.tramite.fechaEstimada} onChange={(e)=>upd("tramite.fechaEstimada", e.target.value)} /></Campo>
+          </G2>
+          <Campo label="Descripción"><textarea style={{...S.input, minHeight:60}} value={form.tramite.desc} onChange={(e)=>upd("tramite.desc", e.target.value)} /></Campo>
+          <Campo label="Requisitos / documentos (marca los que ya tienes)">
+            <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(210px, 1fr))", gap:9}}>
+              {reqOrden(form).map((r) => {
+                const on = (form.tramite.reqs || {})[r];
+                return (
+                  <button key={r} onClick={()=>upd("tramite.reqs", { ...(form.tramite.reqs||{}), [r]: !on })}
+                    style={{display:"flex", alignItems:"center", gap:11, padding:"12px 14px", borderRadius:11,
+                      border:"1.5px solid "+(on?"#1B7A3D":"#D5DBE7"), background:on?"#E9F8EE":"#fff",
+                      cursor:"pointer", textAlign:"left", fontSize:14.5, fontWeight:600, color:NAVY}}>
+                    <span style={{width:24, height:24, borderRadius:7, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center",
+                      background:on?"#1B7A3D":"#fff", border:"2px solid "+(on?"#1B7A3D":"#C9D2E2"), color:"#fff", fontSize:15, fontWeight:800}}>{on?"✓":""}</span>
+                    {r}
+                  </button>
+                );
+              })}
+            </div>
+          </Campo>
+          <G2>
+            <Campo label="Documentos entregados"><textarea style={{...S.input, minHeight:60}} value={form.tramite.docsEntregados} onChange={(e)=>upd("tramite.docsEntregados", e.target.value)} /></Campo>
+            <Campo label="Documentos pendientes (visibles al cliente)"><textarea style={{...S.input, minHeight:60}} value={form.tramite.docsPendientes} onChange={(e)=>upd("tramite.docsPendientes", e.target.value)} /></Campo>
+          </G2>
+        </Sec>}
+        <Sec titulo="Costos">
+          <p style={{fontSize:13, color:"#5A6478", marginTop:0, marginBottom:14}}>
+            Los conceptos ya están cargados. Escribe solo el valor de los que apliquen; los vacíos no aparecen en la cotización.
+            Si registras un valor en <b>Impuestos</b>, se agrega automáticamente la fila de honorarios de impuestos.
+          </p>
+          {form.conceptos.map((x, i) => {
+            const fijo = x.desc === HON_IMPUESTOS;
+            return (
+            <div key={i} style={{display:"grid", gridTemplateColumns:"1fr 150px 38px", gap:8, marginBottom:8, alignItems:"center"}}>
+              <input style={{...S.input, background: fijo ? "#EAF2FF" : CONCEPTOS_BASE.includes(x.desc) ? "#F7F9FC" : "#fff", color: fijo ? BLUE : NAVY, fontWeight: fijo ? 700 : 400}} value={x.desc} placeholder="Otro concepto" readOnly={fijo}
+                onChange={(e)=>{ const c=[...form.conceptos]; c[i]={...c[i], desc:e.target.value}; upd("conceptos", c); }} />
+              <input style={{...S.input, textAlign:"right", fontWeight:700, background: fijo ? "#EAF2FF" : "#fff"}} inputMode="numeric" value={miles(x.valor)} placeholder="0" readOnly={fijo}
+                onChange={(e)=>{ const c=[...form.conceptos]; c[i]={...c[i], valor:soloNum(e.target.value)}; upd("conceptos", normalizarConceptos(c)); }} />
+              {fijo ? <div /> : <button style={{...S.btnD, padding:"8px 8px"}} onClick={()=>{ upd("conceptos", normalizarConceptos(form.conceptos.filter((_,j)=>j!==i))); }}>✕</button>}
+            </div>);
+          })}
+          <button style={{...S.btnS, marginBottom:16}} onClick={()=>upd("conceptos", [...form.conceptos, {cant:1, desc:"", valor:""}])}>+ Agregar otro concepto</button>
+          <G2>
+            <Campo label="Descuento"><input style={{...S.input, textAlign:"right", fontWeight:700}} inputMode="numeric" value={miles(form.descuento)} onChange={(e)=>upd("descuento", soloNum(e.target.value))} placeholder="0" /></Campo>
+            <Campo label="Abono en efectivo"><input style={{...S.input, textAlign:"right", fontWeight:700}} inputMode="numeric" value={miles(form.abonoEfectivo)} onChange={(e)=>upd("abonoEfectivo", soloNum(e.target.value))} placeholder="0" /></Campo>
+            <Campo label="Abono por transferencia"><input style={{...S.input, textAlign:"right", fontWeight:700}} inputMode="numeric" value={miles(form.abonoTransferencia)} onChange={(e)=>upd("abonoTransferencia", soloNum(e.target.value))} placeholder="0" /></Campo>
+            {Number(form.abonoTransferencia) > 0 && <Campo label="¿A qué banco entró la transferencia?">
+              <select style={S.input} value={form.bancoTransferencia || "Nequi"} onChange={(e)=>upd("bancoTransferencia", e.target.value)}>
+                {BANCOS_DISPONIBLES.map((b)=><option key={b}>{b}</option>)}
+              </select>
+            </Campo>}
+          </G2>
+          <div style={{background:"#F4F6FA", borderRadius:12, padding:"14px 18px", display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(130px, 1fr))", gap:10, fontSize:14}}>
+            <div><span style={S.label}>Subtotal</span><b>{fmt(t.sub)}</b></div>
+            <div><span style={S.label}>Total</span><b style={{fontSize:17}}>{fmt(t.total)}</b></div>
+            <div><span style={S.label}>Abonado</span><b style={{color:"#1B7A3D"}}>{fmt(t.abono)}</b></div>
+            <div><span style={S.label}>Saldo</span><b style={{color: t.saldo>0?"#B3372A":"#1B7A3D"}}>{fmt(t.saldo)}</b></div>
+          </div>
+        </Sec>
+        <div style={{display:"flex", gap:10, flexWrap:"wrap"}}>
+          <button style={S.btnP} onClick={guardarCotizacion}>{form.numero ? "Guardar cambios" : "Crear cotización"}</button>
+          <button style={S.btnS} onClick={()=>setVista(form.numero ? "detalle" : "lista")}>Cancelar</button>
+        </div>
+      </Shell>
+    );
+  }
+
+  /* ================= VISTA PREVIA COTIZACIÓN ================= */
+  if (vista === "preview" && sel) {
+    const c = db.cotizaciones.find((x)=>x.id===sel.id) || sel;
+    const t = totales(c);
+    const filas = c.conceptos.filter((x)=> Number(x.valor) > 0);
+    return (
+      <div style={{minHeight:"100vh", background:"#EEF1F7", fontFamily:"'Segoe UI',system-ui,sans-serif"}}>
+        <div style={{background:NAVY, padding:"12px 16px", display:"flex", gap:8, justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", position:"sticky", top:0, zIndex:10}}>
+          <button style={{...S.btnS, padding:"9px 14px"}} onClick={()=>setVista("detalle")}>← Volver</button>
+          <div style={{display:"flex", gap:8, flexWrap:"wrap"}}>
+            <button style={S.btnP} onClick={()=>abrirCotizacion(c, notificar)}>Abrir en pestaña para imprimir</button>
+            <button style={{...S.btnS}} onClick={()=>descargarCotizacion(c, notificar)}>Descargar</button>
+          </div>
+        </div>
+        <div style={{padding:"16px 8px 40px"}}>
+          <div style={{maxWidth:720, margin:"0 auto", background:"#fff", borderRadius:8, boxShadow:"0 2px 12px rgba(10,30,66,.15)", padding:"28px 26px", color:NAVY}}>
+            <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", borderBottom:`3px solid ${NAVY}`, paddingBottom:14, marginBottom:18, gap:16, flexWrap:"wrap"}}>
+              <img src={LOGO} alt="MoviGestión Luz" style={{height:44}} />
+              <div style={{textAlign:"right", fontSize:12, color:"#5A6478"}}>
+                <div style={{fontSize:17, fontWeight:900, color:NAVY}}>{esCotizacion(c) ? "COTIZACIÓN" : "ORDEN DE TRÁMITE"} {c.numero}</div>
+                <div>Fecha: {c.fecha}</div>
+                {c.vence && <div>Válida hasta: {c.vence}</div>}
+                <div>Tel: {TEL_VISIBLE}</div>
+                <div>{DIRECCION}</div>
+              </div>
+            </div>
+            <div style={{display:"flex", gap:24, marginBottom:16, flexWrap:"wrap"}}>
+              <div style={{flex:1, minWidth:200}}>
+                <div style={{fontSize:12, letterSpacing:".06em", borderBottom:"1.5px solid #E8ECF3", paddingBottom:4, marginBottom:7, fontWeight:800}}>CLIENTE</div>
+                <div><b>{c.cliente.nombre}</b></div>
+                <div>{c.cliente.tipoDoc} {c.cliente.doc}</div>
+                <div>{c.cliente.tel}</div>
+              </div>
+              <div style={{flex:1, minWidth:200}}>
+                <div style={{fontSize:12, letterSpacing:".06em", borderBottom:"1.5px solid #E8ECF3", paddingBottom:4, marginBottom:7, fontWeight:800}}>VEHÍCULO</div>
+                <div>Placa: <b>{c.vehiculo.placa}</b></div>
+                <div>{c.vehiculo.marca} {c.vehiculo.linea} {c.vehiculo.modelo}</div>
+                <div>Matriculado en: {c.vehiculo.ciudadMat || "—"}</div>
+                <div>Servicio: {c.vehiculo.servicio}</div>
+                <div style={{marginTop:6}}>SOAT: <b>{getSoat(c).tiene ? ("Vigente"+(getSoat(c).hasta?" hasta "+getSoat(c).hasta:"")) : "No registra"}</b></div>
+                <div>Tecnomecánica: <b>{getTecno(c).tiene ? ("Vigente"+(getTecno(c).hasta?" hasta "+getTecno(c).hasta:"")) : "No registra"}</b></div>
+              </div>
+            </div>
+            {!esCotizacion(c) && <div style={{fontSize:12, letterSpacing:".06em", borderBottom:"1.5px solid #E8ECF3", paddingBottom:4, marginBottom:7, fontWeight:800}}>TRÁMITE{getTipos(c).length>1?"S":""}: {tiposTexto(c).toUpperCase()}</div>}
+            {!esCotizacion(c) && c.tramite.desc && <div style={{marginBottom:4}}>{c.tramite.desc}</div>}
+            {!esCotizacion(c) && c.tramite.fechaEstimada && <div style={{marginBottom:4}}>Entrega estimada: {c.tramite.fechaEstimada}</div>}
+            <table style={{width:"100%", borderCollapse:"collapse", margin:"14px 0", fontSize:13.5}}>
+              <thead><tr style={{background:NAVY, color:"#fff"}}>
+                <th style={{padding:"8px 10px", textAlign:"left"}}>Descripción</th>
+                <th style={{padding:"8px 10px", textAlign:"right"}}>Valor</th>
+              </tr></thead>
+              <tbody>{filas.map((x,i)=>(
+                <tr key={i} style={{borderBottom:"1px solid #E8ECF3"}}>
+                  <td style={{padding:"7px 10px"}}>{x.desc}</td>
+                  <td style={{padding:"7px 10px", textAlign:"right"}}>{fmt(x.valor)}</td>
+                </tr>))}
+                {filas.length===0 && <tr><td colSpan={2} style={{padding:"10px", color:"#9AA3B2"}}>Sin valores registrados aún.</td></tr>}
+              </tbody>
+            </table>
+            <div style={{marginLeft:"auto", width:280, fontSize:13.5}}>
+              {Number(c.descuento)>0 && <div style={{display:"flex", justifyContent:"space-between", padding:"4px 10px"}}><span>Descuento</span><span>−{fmt(c.descuento)}</span></div>}
+              <div style={{display:"flex", justifyContent:"space-between", padding:"8px 10px", background:NAVY, color:"#fff", fontWeight:800, borderRadius:6}}><span>TOTAL</span><span>{fmt(t.total)}</span></div>
+              {t.abono>0 && <>
+                <div style={{display:"flex", justifyContent:"space-between", padding:"4px 10px 0"}}><span>Abono</span><span>{fmt(t.abono)}</span></div>
+                <div style={{display:"flex", justifyContent:"space-between", padding:"4px 10px", fontWeight:800}}><span>SALDO</span><span>{fmt(t.saldo)}</span></div>
+                <div style={{padding:"8px 10px 0", fontSize:12, color:"#5A6478"}}>
+                  {Number(c.abonoEfectivo)>0 && <div style={{display:"flex", justifyContent:"space-between"}}><span>· Efectivo</span><span>{fmt(c.abonoEfectivo)}</span></div>}
+                  {Number(c.abonoTransferencia)>0 && <div style={{display:"flex", justifyContent:"space-between"}}><span>· {c.bancoTransferencia||"Nequi"}</span><span>{fmt(c.abonoTransferencia)}</span></div>}
+                </div>
+              </>}
+            </div>
+            {!esCotizacion(c) && (c.tramite.reqs && Object.keys(c.tramite.reqs).length) ? <div style={{marginTop:16}}>
+              <div style={{fontSize:12, letterSpacing:".06em", fontWeight:800, marginBottom:8}}>REQUISITOS / DOCUMENTOS</div>
+              <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(200px, 1fr))", gap:"5px 18px", fontSize:13}}>
+                {reqOrden(c).map((r)=>{ const on=getReqs(c)[r]===true; return (
+                  <div key={r} style={{display:"flex", alignItems:"center", gap:8}}>
+                    <span style={{width:18, height:18, borderRadius:5, display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:800, color:"#fff", background:on?"#1B7A3D":"#C9D2E2"}}>{on?"✓":"✕"}</span>{r}
+                  </div>);})}
+              </div>
+            </div> : null}
+            <div style={{background:"#F4F6FA", borderRadius:10, padding:"12px 16px", fontSize:12.5, margin:"16px 0"}}>
+              <b>Seguimiento en línea:</b> consulta el estado con la placa <b>{c.vehiculo.placa}</b> y el código <b style={{letterSpacing:".1em"}}>{c.codigo}</b>.
+            </div>
+            <div style={{display:"flex", justifyContent:"space-between", fontSize:12, color:"#5A6478", borderTop:"1px solid #E8ECF3", paddingTop:12, flexWrap:"wrap", gap:8}}>
+              <div>Asesor: <b style={{color:NAVY}}>{c.asesor || "—"}</b></div>
+              <div>MoviGestión Luz · Servicios Integrales Vehiculares</div>
+            </div>
+          </div>
+          <p style={{maxWidth:720, margin:"14px auto 0", fontSize:12.5, color:"#5A6478", textAlign:"center"}}>
+            Para guardar en PDF: toca <b>Abrir en pestaña para imprimir</b> y luego elige <b>Imprimir → Guardar como PDF</b>.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  /* ================= ENVIAR SEGUIMIENTO POR WHATSAPP ================= */
+  if (vista === "enviarWA" && sel) {
+    const c = db.cotizaciones.find((x)=>x.id===sel.id) || sel;
+    const mensaje = mensajeSeguimiento(c);
+    const link = `https://wa.me/${waCliente(c)}?text=${encodeURIComponent(mensaje)}`;
+    const faltan = docsFaltantes(c);
+    const negrita = (linea, i) => {
+      const partes = linea.split(/(\*[^*]+\*)/g);
+      return <div key={i} style={{minHeight: linea==="" ? 10 : "auto"}}>{partes.map((p, j) =>
+        p.startsWith("*") && p.endsWith("*") && p.length>2
+          ? <b key={j}>{p.slice(1,-1)}</b> : <span key={j}>{p}</span>)}</div>;
+    };
+    return (
+      <div style={{minHeight:"100vh", background:"#F4F6FA", fontFamily:"'Segoe UI',system-ui,sans-serif"}}>
+        <div style={{background:NAVY, padding:"16px clamp(20px,4vw,48px)", display:"flex", justifyContent:"space-between", alignItems:"center"}}>
+          <Logo dark alto={34} />
+          <button style={{...S.btnS, padding:"9px 16px"}} onClick={()=>setVista("detalle")}>Ir al trámite</button>
+        </div>
+        <div style={{maxWidth:620, margin:"0 auto", padding:"28px 16px"}}>
+          <div style={{...S.card, textAlign:"center", marginBottom:16, borderTop:"4px solid #25D366"}}>
+            <div style={{fontSize:34, marginBottom:4}}>✅</div>
+            <h2 style={{...S.h2, fontSize:22, marginBottom:4}}>Cotización {c.numero} creada</h2>
+            <p style={{fontSize:14.5, color:"#5A6478", margin:0}}>Envíale al cliente el mensaje de seguimiento con su placa y código.</p>
+          </div>
+
+          <div style={{...S.card, marginBottom:16}}>
+            <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10, flexWrap:"wrap", gap:6}}>
+              <div style={{fontWeight:800, color:NAVY}}>Vista previa del mensaje</div>
+              <div style={{fontSize:13, color:"#5A6478"}}>Para: <b style={{color:NAVY}}>{c.cliente.tel || "sin número"}</b></div>
+            </div>
+            {!c.cliente.tel && <div style={{background:"#FFF3D6", color:"#9A6B00", padding:"9px 12px", borderRadius:9, fontSize:13, marginBottom:10}}>
+              Esta cotización no tiene número de teléfono del cliente. Puedes agregarlo con <b>Editar</b>, o copiar el mensaje y enviarlo manualmente.
+            </div>}
+            <div style={{background:"#E7F7EC", border:"1px solid #C9EBD3", borderRadius:14, padding:"14px 16px", fontSize:14.5, lineHeight:1.5, color:"#0A2A17", whiteSpace:"pre-wrap"}}>
+              {mensaje.split("\n").map(negrita)}
+            </div>
+            {faltan.length > 0 && <div style={{fontSize:12.5, color:"#9A6B00", marginTop:10}}>Se incluyeron automáticamente {faltan.length} documento(s) faltante(s).</div>}
+          </div>
+
+          <a href={link} target="_blank" rel="noreferrer"
+            style={{...S.btnP, background:"#25D366", boxShadow:"0 2px 8px rgba(37,211,102,.35)", display:"block", textAlign:"center", textDecoration:"none", fontSize:16.5, padding:"15px", marginBottom:10}}>
+            Enviar por WhatsApp
+          </a>
+          <div style={{display:"flex", gap:10}}>
+            <button style={{...S.btnS, flex:1}} onClick={()=>{ try{ navigator.clipboard.writeText(mensaje); notificar("Mensaje copiado"); }catch(e){ notificar("No se pudo copiar"); } }}>Copiar mensaje</button>
+            <button style={{...S.btnS, flex:1}} onClick={()=>setVista("detalle")}>Omitir</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ================= DETALLE ================= */
+  if (vista === "detalle" && sel) {
+    const c = db.cotizaciones.find((x)=>x.id===sel.id) || sel;
+    const t = totales(c);
+    return (
+      <Shell vista={vista} setVista={setVista} onNueva={irNueva} onSalir={salir} toast={toast}>
+        <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14, flexWrap:"wrap", gap:10}}>
+          <div>
+            <h2 style={{...S.h2, fontSize:26}}>{c.numero} · <span style={{letterSpacing:".06em"}}>{c.vehiculo.placa}</span></h2>
+            <div style={{fontSize:13.5, color:"#5A6478", marginTop:3}}>Código de seguimiento: <b style={{color:NAVY, letterSpacing:".1em"}}>{c.codigo}</b> · {c.fecha}</div>
+          </div>
+          <span style={esCotizacion(c) ? tag("#FBF3DE","#8A6D1B") : colorEstado(c.estado)}>{esCotizacion(c) ? "Cotización" : c.estado}</span>
+        </div>
+        {esCotizacion(c) && <div style={{...S.card, marginBottom:14, borderLeft:"4px solid "+GOLD, display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:12}}>
+          <div style={{fontSize:14.5, color:NAVY}}><b>Esta es una cotización.</b> Cuando el cliente acepte, conviértela en trámite para gestionar documentos y seguimiento.</div>
+          <button style={{...S.btnP, background:GOLD, boxShadow:"none"}} onClick={()=>convertirATramite(c)}>Convertir a trámite</button>
+        </div>}
+        <div style={{display:"flex", gap:8, flexWrap:"wrap", marginBottom:18}}>
+          <button style={S.btnP} onClick={()=>{setSel(c); setVista("preview");}}>Ver {esCotizacion(c) ? "cotización" : "factura"}</button>
+          <button style={S.btnS} onClick={()=>abrirCotizacion(c, notificar)}>Abrir en pestaña</button>
+          <button style={S.btnS} onClick={()=>descargarCotizacion(c, notificar)}>Descargar</button>
+          <button style={{...S.btnP, background:"#25D366", boxShadow:"none"}} onClick={()=>{setSel(c); setVista("enviarWA");}}>Enviar por WhatsApp</button>
+          <button style={S.btnS} onClick={()=>{setForm(JSON.parse(JSON.stringify(c))); setVista("form");}}>Editar</button>
+          <button style={S.btnS} onClick={()=>duplicar(c)}>Duplicar</button>
+          <button style={S.btnD} onClick={()=>eliminar(c.id)}>Eliminar</button>
+        </div>
+        <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(300px, 1fr))", gap:18, marginBottom:14}}>
+          <div style={S.card}>
+            <div style={{fontWeight:800, color:NAVY, marginBottom:10}}>Cliente</div>
+            <div style={{fontSize:14, lineHeight:1.8}}>
+              <b>{c.cliente.nombre}</b><br/>{c.cliente.tipoDoc} {c.cliente.doc}<br/>{c.cliente.tel}
+            </div>
+          </div>
+          <div style={S.card}>
+            <div style={{fontWeight:800, color:NAVY, marginBottom:10}}>Vehículo · {tiposTexto(c)}</div>
+            <div style={{fontSize:14, lineHeight:1.8}}>
+              {c.vehiculo.marca} {c.vehiculo.linea} {c.vehiculo.modelo} · {c.vehiculo.tipo}<br/>
+              Servicio {c.vehiculo.servicio}{c.vehiculo.ciudadMat && <><br/>Matriculado en {c.vehiculo.ciudadMat}</>}
+              {c.tramite.fechaEstimada && <><br/>Entrega estimada: <b>{c.tramite.fechaEstimada}</b></>}
+            </div>
+            <div style={{marginTop:12, borderTop:"1px solid #EEF1F7", paddingTop:12, display:"grid", gap:10}}>
+              {[["soat","SOAT"],["tecno","Tecnomecánica"]].map(([k, lbl]) => {
+                const d = (c.vehiculo && c.vehiculo[k]) || { tiene:false, desde:"", hasta:"" };
+                return (
+                  <div key={k}>
+                    <button onClick={()=>toggleVigencia(k)} style={{display:"flex", alignItems:"center", gap:9, padding:"8px 11px", borderRadius:9, width:"100%",
+                      border:"1.5px solid "+(d.tiene?"#1B7A3D":"#D5DBE7"), background:d.tiene?"#E9F8EE":"#fff", cursor:"pointer", textAlign:"left", fontSize:13.5, fontWeight:700, color:NAVY}}>
+                      <span style={{width:20, height:20, borderRadius:6, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center",
+                        background:d.tiene?"#1B7A3D":"#fff", border:"2px solid "+(d.tiene?"#1B7A3D":"#C9D2E2"), color:"#fff", fontSize:13, fontWeight:800}}>{d.tiene?"✓":""}</span>
+                      {lbl} {d.tiene ? "vigente" : "no tiene"}
+                    </button>
+                    {d.tiene && <div style={{display:"flex", gap:6, marginTop:6}}>
+                      <input type="date" style={{...S.input, padding:"7px 9px", fontSize:13}} value={d.desde} onChange={(e)=>setVigenciaFecha(k,"desde",e.target.value)} />
+                      <input type="date" style={{...S.input, padding:"7px 9px", fontSize:13}} value={d.hasta} onChange={(e)=>setVigenciaFecha(k,"hasta",e.target.value)} />
+                    </div>}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          <div style={S.card}>
+            <div style={{fontWeight:800, color:NAVY, marginBottom:10}}>Cuenta de cobro</div>
+            <div style={{display:"flex", justifyContent:"space-between", fontSize:14, marginBottom:5}}><span>Total</span><b>{fmt(t.total)}</b></div>
+            <div style={{display:"flex", justifyContent:"space-between", fontSize:13.5, marginBottom:3, color:"#5A6478"}}><span>Efectivo</span><span>{fmt(c.abonoEfectivo)}</span></div>
+            <div style={{display:"flex", justifyContent:"space-between", fontSize:13.5, marginBottom:5, color:"#5A6478"}}><span>Transferencia{Number(c.abonoTransferencia)>0 ? " ("+(c.bancoTransferencia||"Nequi")+")" : ""}</span><span>{fmt(c.abonoTransferencia)}</span></div>
+            <div style={{display:"flex", justifyContent:"space-between", fontSize:14, marginBottom:5, borderTop:"1px solid #EEF1F7", paddingTop:6}}><span>Abonado</span><b style={{color:"#1B7A3D"}}>{fmt(t.abono)}</b></div>
+            <div style={{display:"flex", justifyContent:"space-between", fontSize:16, marginBottom:12}}><b>Saldo</b><b style={{color: t.saldo>0?"#B3372A":"#1B7A3D"}}>{fmt(t.saldo)}</b></div>
+
+            <div style={{fontSize:12, fontWeight:700, color:"#5A6478", textTransform:"uppercase", letterSpacing:".05em", marginBottom:6}}>Registrar abono</div>
+            <div style={{display:"flex", gap:6, marginBottom:8, alignItems:"center"}}>
+              <input inputMode="numeric" style={{...S.input, textAlign:"right", fontWeight:700, padding:"9px 11px"}} placeholder="Efectivo"
+                value={miles(abonoEfe)} onChange={(e)=>setAbonoEfe(soloNum(e.target.value))} onKeyDown={(e)=>{ if(e.key==="Enter"){ registrarAbono("efectivo", abonoEfe); setAbonoEfe(""); }}} />
+              <button style={{...S.btnP, padding:"10px 14px", whiteSpace:"nowrap"}} onClick={()=>{ registrarAbono("efectivo", abonoEfe); setAbonoEfe(""); }}>+ Efec.</button>
+            </div>
+            <div style={{display:"flex", gap:6, alignItems:"center"}}>
+              <input inputMode="numeric" style={{...S.input, textAlign:"right", fontWeight:700, padding:"9px 11px"}} placeholder="Transferencia"
+                value={miles(abonoTra)} onChange={(e)=>setAbonoTra(soloNum(e.target.value))} onKeyDown={(e)=>{ if(e.key==="Enter"){ registrarAbono("transferencia", abonoTra); setAbonoTra(""); }}} />
+              <button style={{...S.btnP, padding:"10px 14px", whiteSpace:"nowrap"}} onClick={()=>{ registrarAbono("transferencia", abonoTra); setAbonoTra(""); }}>+ Transf.</button>
+            </div>
+            <details style={{marginTop:10}}>
+              <summary style={{fontSize:12.5, color:BLUE, fontWeight:700, cursor:"pointer"}}>Corregir totales de abono</summary>
+              <div style={{display:"flex", gap:6, marginTop:8}}>
+                <div style={{flex:1}}><label style={{...S.label, fontSize:10.5}}>Efectivo total</label><input inputMode="numeric" style={{...S.input, textAlign:"right", padding:"8px 10px", fontSize:13}} value={miles(c.abonoEfectivo)} onChange={(e)=>ajustarAbono("abonoEfectivo", e.target.value)} /></div>
+                <div style={{flex:1}}><label style={{...S.label, fontSize:10.5}}>Transf. total</label><input inputMode="numeric" style={{...S.input, textAlign:"right", padding:"8px 10px", fontSize:13}} value={miles(c.abonoTransferencia)} onChange={(e)=>ajustarAbono("abonoTransferencia", e.target.value)} /></div>
+              </div>
+              {Number(c.abonoTransferencia) > 0 && <div style={{marginTop:8}}>
+                <label style={{...S.label, fontSize:10.5}}>Banco de la transferencia</label>
+                <select style={{...S.input, padding:"8px 10px", fontSize:13}} value={c.bancoTransferencia||"Nequi"} onChange={(e)=>ajustarAbono("bancoTransferencia", e.target.value)}>
+                  {BANCOS_DISPONIBLES.map((b)=><option key={b}>{b}</option>)}
+                </select>
+              </div>}
+            </details>
+          </div>
+        </div>
+        {!esCotizacion(c) && <>
+        <div style={{...S.card, marginBottom:14}}>
+          <div style={{fontWeight:800, color:NAVY, marginBottom:4}}>Documentos y observaciones</div>
+          <div style={{fontSize:13, color:"#5A6478", marginBottom:14}}>Chulea el documento cuando el cliente lo entregue. Los pendientes se muestran al cliente en su seguimiento.</div>
+
+          <div style={{fontSize:12.5, fontWeight:700, color:"#5A6478", textTransform:"uppercase", letterSpacing:".05em", marginBottom:8}}>Documentos</div>
+          <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(210px, 1fr))", gap:8, marginBottom:18}}>
+            {reqOrden(sel).map((r) => {
+              const on = getReqs(sel)[r] === true;
+              return (
+                <button key={r} onClick={()=>toggleDoc(r)}
+                  style={{display:"flex", alignItems:"center", gap:10, padding:"11px 13px", borderRadius:10,
+                    border:"1.5px solid "+(on?"#1B7A3D":"#E0A800"), background:on?"#E9F8EE":"#FFF9E9",
+                    cursor:"pointer", textAlign:"left", fontSize:14, fontWeight:600, color:NAVY}}>
+                  <span style={{width:22, height:22, borderRadius:6, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center",
+                    background:on?"#1B7A3D":"#fff", border:"2px solid "+(on?"#1B7A3D":"#E0A800"), color:"#fff", fontSize:14, fontWeight:800}}>{on?"✓":""}</span>
+                  <span>{r}<br/><span style={{fontSize:11, fontWeight:700, color:on?"#1B7A3D":"#9A6B00"}}>{on?"Entregado":"Pendiente"}</span></span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div style={{fontSize:12.5, fontWeight:700, color:"#5A6478", textTransform:"uppercase", letterSpacing:".05em", marginBottom:8}}>Observaciones / pendientes</div>
+          {getObs(sel).length === 0 && <div style={{fontSize:13.5, color:"#9AA3B2", marginBottom:10}}>No hay observaciones registradas.</div>}
+          {getObs(sel).map((o) => (
+            <div key={o.id} style={{display:"flex", alignItems:"flex-start", gap:10, padding:"9px 0", borderBottom:"1px solid #EEF1F7"}}>
+              <button onClick={()=>toggleObs(o.id)} style={{width:24, height:24, borderRadius:7, flexShrink:0, marginTop:1, cursor:"pointer",
+                background:o.hecho?"#1B7A3D":"#fff", border:"2px solid "+(o.hecho?"#1B7A3D":"#C9D2E2"), color:"#fff", fontSize:14, fontWeight:800}}>{o.hecho?"✓":""}</button>
+              <div style={{flex:1, fontSize:14}}>
+                <div style={{textDecoration:o.hecho?"line-through":"none", color:o.hecho?"#9AA3B2":NAVY}}>{o.texto}</div>
+                <div style={{fontSize:11.5, color:"#5A6478", marginTop:2}}>{o.fecha} · {o.visible ? "Visible al cliente" : "Interno"}</div>
+              </div>
+              <button onClick={()=>eliminarObs(o.id)} style={{...S.btnD, padding:"6px 10px", fontSize:13}}>✕</button>
+            </div>
+          ))}
+          <div style={{display:"flex", gap:10, flexWrap:"wrap", alignItems:"flex-end", marginTop:12}}>
+            <div style={{flex:"1 1 300px"}}>
+              <label style={S.label}>Nueva observación o pendiente</label>
+              <input style={S.input} value={nuevaObs} onChange={(e)=>setNuevaObs(e.target.value)}
+                onKeyDown={(e)=>{ if(e.key==="Enter"){ agregarObs(nuevaObs, obsVisible); setNuevaObs(""); }}}
+                placeholder="Ej: falta firma en el mandato" />
+            </div>
+            <label style={{display:"flex", alignItems:"center", gap:6, fontSize:13, fontWeight:600, color:NAVY, paddingBottom:11, cursor:"pointer"}}>
+              <input type="checkbox" checked={obsVisible} onChange={(e)=>setObsVisible(e.target.checked)} /> Visible al cliente
+            </label>
+            <button style={S.btnP} onClick={()=>{ agregarObs(nuevaObs, obsVisible); setNuevaObs(""); }}>Agregar</button>
+          </div>
+        </div>
+        <div style={{...S.card, marginBottom:14}}>
+          <div style={{fontWeight:800, color:NAVY, marginBottom:4}}>Archivos del trámite</div>
+          <div style={{fontSize:13, color:"#5A6478", marginBottom:14}}>Guarda aquí fotos o PDF del trámite: cédulas, tarjeta de propiedad, improntas, formularios, etc. (PDF, PNG o JPG).</div>
+          {getAdj(sel).length > 0 && <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(150px, 1fr))", gap:12, marginBottom:14}}>
+            {getAdj(sel).map((a) => (
+              <div key={a.id} style={{border:"1px solid #E8ECF3", borderRadius:12, overflow:"hidden", background:"#fff"}}>
+                <div onClick={()=>abrirAdjunto(a)} style={{cursor:"pointer", height:110, background:"#F4F6FA", display:"flex", alignItems:"center", justifyContent:"center"}}>
+                  {a.tipo === "img"
+                    ? <img src={a.data} alt={a.nombre} style={{width:"100%", height:"100%", objectFit:"cover"}} />
+                    : <div style={{textAlign:"center", color:"#B3372A"}}><div style={{fontSize:30, fontWeight:900}}>PDF</div></div>}
+                </div>
+                <div style={{padding:"8px 10px"}}>
+                  <div style={{fontSize:12, color:NAVY, fontWeight:600, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}} title={a.nombre}>{a.nombre}</div>
+                  <div style={{display:"flex", justifyContent:"space-between", marginTop:6}}>
+                    <button onClick={()=>abrirAdjunto(a)} style={{background:"none", border:"none", color:BLUE, fontWeight:700, fontSize:12.5, cursor:"pointer", padding:0}}>Abrir</button>
+                    <button onClick={()=>eliminarAdjunto(a.id)} style={{background:"none", border:"none", color:"#C0392B", fontWeight:700, fontSize:12.5, cursor:"pointer", padding:0}}>Eliminar</button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>}
+          <label style={{...S.btnS, display:"inline-block"}}>
+            + Subir archivos
+            <input type="file" accept=".pdf,.png,.jpg,.jpeg,image/*,application/pdf" multiple style={{display:"none"}}
+              onChange={(e)=>{ subirAdjuntos(e.target.files); e.target.value=""; }} />
+          </label>
+        </div>
+        <div style={{...S.card, marginBottom:14}}>
+          <div style={{fontWeight:800, color:NAVY, marginBottom:12}}>Actualizar estado</div>
+          <div style={{display:"flex", gap:10, flexWrap:"wrap", alignItems:"flex-end"}}>
+            <div style={{flex:"1 1 220px"}}>
+              <label style={S.label}>Nuevo estado</label>
+              <select style={S.input} value={nuevoEstado} onChange={(e)=>setNuevoEstado(e.target.value)}>
+                <option value="">Seleccionar…</option>
+                {ESTADOS.map((e, i)=><option key={e}>{e}</option>)}
+              </select>
+            </div>
+            <div style={{flex:"2 1 280px"}}>
+              <label style={S.label}>{nuevoEstado === RETENIDO ? "Motivo de la retención" : "Observación"}</label>
+              <input style={S.input} value={obsEstado} onChange={(e)=>setObsEstado(e.target.value)} placeholder={nuevoEstado === RETENIDO ? "Ej: falta improntas, documento con enmendadura…" : "Ej: cita agendada para el 30 de julio"} />
+            </div>
+            <label style={{display:"flex", alignItems:"center", gap:6, fontSize:13, fontWeight:600, color:NAVY, paddingBottom:10, cursor:"pointer"}}>
+              <input type="checkbox" checked={visibleCliente} onChange={(e)=>setVisibleCliente(e.target.checked)} /> Visible al cliente
+            </label>
+            <button style={S.btnP} onClick={cambiarEstado}>Actualizar</button>
+          </div>
+        </div>
+        <div style={S.card}>
+          <div style={{fontWeight:800, color:NAVY, marginBottom:12}}>Historial del trámite</div>
+          {c.historial.slice().reverse().map((h, i) => (
+            <div key={i} style={{display:"flex", gap:12, padding:"10px 0", borderBottom:"1px solid #EEF1F7", fontSize:13.5}}>
+              <div style={{width:8, height:8, borderRadius:"50%", background:BLUE, marginTop:6, flexShrink:0}} />
+              <div>
+                <b style={{color:NAVY}}>{h.a}</b> <span style={{color:"#5A6478"}}>· {h.fecha} · {h.usuario}</span>
+                {!h.visible && <span style={{...tag("#EEF1F7","#5A6478"), marginLeft:8, fontSize:11}}>Interno</span>}
+                {h.obs && <div style={{marginTop:2}}>{h.obs}</div>}
+              </div>
+            </div>
+          ))}
+        </div>
+        </>}
+      </Shell>
+    );
+  }
+
+  return null;
+}
+
+
+/* ================= APLICATIVO DE CAJA (encapsulado) ================= */
+function CajaApp({ onSalirCaja }) {
+
+  /* ============================================================
+     CAJA MOVIGESTIÓN LUZ — Control financiero de la empresa
+     Conectado a Supabase (misma nube de los trámites)
+     ============================================================ */
+
+  const PIN_CAJA = "CAJA2026";
+  const NAVY = "#0A1E42";
+  const BLUE = "#1E6FEB";
+  const GOLD = "#C9A24B";
+  const GREEN = "#1B7A3D";
+  const RED = "#B3372A";
+  const PURPLE = "#6B2FB3";
+
+
+
+
+
+
+  /* cuentas por defecto */
+  const CUENTAS_DEF = ["Efectivo", "Nequi", "Davivienda", "Bancolombia"];
+  const COLOR_CUENTA = {
+    "Efectivo": "#1B7A3D", "Nequi": "#DA0081", "Davivienda": "#ED1C27", "Bancolombia": "#FDDA24",
+  };
+
+  /* conceptos de trámite: ganancia real vs dinero en canje */
+  const CONCEPTOS_GANANCIA = ["Honorarios", "Honorarios de impuestos", "Papelería", "Improntas"];
+  const CONCEPTOS_CANJE = ["Derechos de tránsito", "Impuestos", "Retención", "Multas", "Mensajería"];
+
+  /* categorías de movimientos */
+  const CAT_INGRESO = ["Abono de trámite", "Abono trámite (Honorarios)", "Abono trámite (Canje)", "Pago de trámite", "Otro ingreso", "Aporte de capital"];
+  const CAT_EGRESO = ["Pago a tránsito (canje)", "Pago a empleado", "Gasto fijo", "Gasto diario", "Retiro personal", "Compra / insumos", "Otro egreso"];
+  const CAT_TRANSFER = ["Entre cuentas", "Retirar dinero de banco", "Consignar dinero a banco"];
+
+  const fmt = (n) => "$" + Math.round(Number(n) || 0).toLocaleString("es-CO");
+  const hoy = () => new Date().toISOString().slice(0, 10);
+  const ahora = () => new Date().toLocaleString("es-CO", { dateStyle: "short", timeStyle: "short" });
+  const miles = (v) => { const d = String(v ?? "").replace(/\D/g, "").replace(/^0+(?=\d)/, ""); return d ? Number(d).toLocaleString("es-CO") : ""; };
+  const soloNum = (v) => String(v ?? "").replace(/\D/g, "");
+  const uid = () => Date.now() + "-" + Math.random().toString(36).slice(2, 7);
+
+  /* estilos base */
+  const S = {
+    input: { width:"100%", padding:"12px 14px", border:"1px solid #D5DBE7", borderRadius:10, fontSize:16, outline:"none", boxSizing:"border-box", background:"#fff", color:NAVY },
+    label: { fontSize:12, fontWeight:700, color:"#5A6478", textTransform:"uppercase", letterSpacing:".06em", marginBottom:6, display:"block" },
+    card: { background:"#fff", borderRadius:18, padding:24, boxShadow:"0 2px 10px rgba(10,30,66,.07)", border:"1px solid #E8ECF3" },
+    btnP: { background:BLUE, color:"#fff", border:"none", padding:"14px 26px", borderRadius:12, fontWeight:800, fontSize:15.5, cursor:"pointer", boxShadow:"0 2px 8px rgba(30,111,235,.28)" },
+    btnS: { background:"#fff", color:NAVY, border:"1.5px solid #CBD4E3", padding:"13px 24px", borderRadius:12, fontWeight:700, fontSize:15, cursor:"pointer" },
+    btnD: { background:"#fff", color:"#C0392B", border:"1.5px solid #F0C4BE", padding:"13px 22px", borderRadius:12, fontWeight:700, fontSize:15, cursor:"pointer" },
+    h2: { fontSize:22, fontWeight:800, color:NAVY, margin:0 },
+  };
+  const tag = (bg, col) => ({ background:bg, color:col, padding:"4px 10px", borderRadius:20, fontSize:12, fontWeight:700, display:"inline-block" });
+
+  /* clasifica el valor de una cotización en ganancia vs canje */
+  function clasificarCotizacion(cot) {
+    let ganancia = 0, canje = 0;
+    (cot.conceptos || []).forEach((x) => {
+      const v = (Number(x.cant) || 1) * (Number(x.valor) || 0);
+      if (!v) return;
+      if (CONCEPTOS_GANANCIA.includes(x.desc)) ganancia += v;
+      else if (CONCEPTOS_CANJE.includes(x.desc)) canje += v;
+      else ganancia += v; // conceptos personalizados se asumen ganancia
+    });
+    return { ganancia, canje };
+  }
+  /* ---------- componentes visuales ---------- */
+  function Logo({ dark, alto }) {
+    return (
+      <div style={{display:"flex", alignItems:"center", gap:10}}>
+        <div style={{background:"#fff", borderRadius:8, padding: dark ? "5px 9px" : 0, display:"flex"}}>
+          <img src={LOGO} alt="MoviGestión Luz" style={{height: alto || 30, display:"block"}} />
+        </div>
+        <div style={{color: dark ? "#fff" : NAVY, fontWeight:800, fontSize:15, letterSpacing:".02em"}}>Caja</div>
+      </div>
+    );
+  }
+  function Campo({ label, children }) {
+    return (<div style={{marginBottom:12}}><label style={S.label}>{label}</label>{children}</div>);
+  }
+  function Sec({ titulo, children, extra }) {
+    return (
+      <div style={{...S.card, marginBottom:16}}>
+        <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14, paddingBottom:8, borderBottom:"1.5px solid #EEF1F7"}}>
+          <div style={{fontWeight:800, color:NAVY, fontSize:15.5}}>{titulo}</div>
+          {extra}
+        </div>
+        {children}
+      </div>
+    );
+  }
+  function Shell({ children, vista, setVista, onSalir, toast }) {
+    const NavBtn = ({ v, label }) => (
+      <button onClick={()=>setVista(v)} style={{
+        background: vista===v ? BLUE : "transparent", color: vista===v ? "#fff" : "#C7D6F0",
+        border:"none", padding:"11px 18px", borderRadius:10, fontWeight:800, fontSize:14.5, cursor:"pointer"}}>{label}</button>
+    );
+    return (
+      <div style={{minHeight:"100vh", background:"#F4F6FA", fontFamily:"'Segoe UI',system-ui,sans-serif"}}>
+        <div style={{background:NAVY, padding:"16px clamp(20px,4vw,48px)", display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:12, position:"sticky", top:0, zIndex:10, boxShadow:"0 2px 12px rgba(10,30,66,.18)"}}>
+          <Logo dark alto={34} />
+          <div style={{display:"flex", gap:6, flexWrap:"wrap"}}>
+            <NavBtn v="panel" label="Panel" />
+            <NavBtn v="movimientos" label="Registrar" />
+            <NavBtn v="resumen" label="Movimientos" />
+            <NavBtn v="arqueo" label="Arqueo" />
+            <NavBtn v="tramites" label="Desde trámites" />
+            <NavBtn v="informe" label="Informe" />
+            <button onClick={onSalir} style={{background:"transparent", border:"1.5px solid #3A5588", color:"#C7D6F0", padding:"10px 16px", borderRadius:10, fontSize:14, fontWeight:700, cursor:"pointer"}}>Salir</button>
+          </div>
+        </div>
+        <div style={{maxWidth:1180, margin:"0 auto", padding:"28px clamp(16px,3vw,36px)"}}>{children}</div>
+        {toast && <div style={{position:"fixed", bottom:22, left:"50%", transform:"translateX(-50%)", background:NAVY, color:"#fff", padding:"12px 22px", borderRadius:12, fontWeight:700, fontSize:14, boxShadow:"0 6px 20px rgba(10,30,66,.3)", zIndex:50, maxWidth:"90vw", textAlign:"center"}}>{toast}</div>}
+      </div>
+    );
+  }
+  /* ============================ APP ============================ */
+  function CajaRoot() {
+    const [caja, setCaja] = useState({ cuentas:{}, movimientos:[], arqueos:[], config:{ cuentas: CUENTAS_DEF } });
+    const [tramitesDb, setTramitesDb] = useState({ cotizaciones: [] });
+    const [cargando, setCargando] = useState(true);
+    const [vista, setVista] = useState("panel");
+    const [pin, setPin] = useState("");
+    const [errPin, setErrPin] = useState("");
+    const [toast, setToast] = useState("");
+
+    // formulario de movimiento
+    const [movTipo, setMovTipo] = useState("ingreso"); // ingreso | egreso | transferencia
+    const [movCuenta, setMovCuenta] = useState("Efectivo");
+    const [movCuentaDest, setMovCuentaDest] = useState("Nequi");
+    const [movMonto, setMovMonto] = useState("");
+    const [movCat, setMovCat] = useState(CAT_INGRESO[0]);
+    const [movNota, setMovNota] = useState("");
+    const [movFecha, setMovFecha] = useState(hoy());
+    const [filtroFecha, setFiltroFecha] = useState("");
+
+    const notificar = (m) => { setToast(m); setTimeout(()=>setToast(""), 3000); };
+    useEffect(() => { cargar(); }, []);
+
+    async function cargar() {
+      // salvavidas: pase lo que pase, la app arranca en 6 segundos
+      const salvavidas = setTimeout(()=> setCargando(false), 6000);
+      const conTimeout = (promesa, ms) => Promise.race([promesa, new Promise((res)=>setTimeout(()=>res({ data:null, error:"timeout" }), ms))]);
+      if (sb) {
+        // caja
+        try {
+          const r1 = await conTimeout(sb.from("caja_state").select("data").eq("id",1).single(), 5000);
+          if (r1 && r1.data && r1.data.data) setCaja(normalizarCaja(r1.data.data));
+        } catch (e) { /* tabla nueva o sin datos */ }
+        // trámites
+        try {
+          const r2 = await conTimeout(sb.from("app_state").select("data").eq("id",1).single(), 5000);
+          if (r2 && r2.data && r2.data.data) setTramitesDb(r2.data.data);
+        } catch (e) { /* sin datos */ }
+        // realtime (si falla, no bloquea)
+        try {
+          sb.channel("caja-rt")
+            .on("postgres_changes", { event:"*", schema:"public", table:"caja_state" },
+              (p)=>{ if (p.new && p.new.data) setCaja(normalizarCaja(p.new.data)); })
+            .on("postgres_changes", { event:"*", schema:"public", table:"app_state" },
+              (p)=>{ if (p.new && p.new.data) setTramitesDb(p.new.data); })
+            .subscribe();
+        } catch (e) {}
+      } else {
+        try { const r = localStorage.getItem("caja-luz-v1"); if (r) setCaja(normalizarCaja(JSON.parse(r))); } catch(e) {}
+        try { const r = localStorage.getItem("movigestion-luz-v1"); if (r) setTramitesDb(JSON.parse(r)); } catch(e) {}
+      }
+      clearTimeout(salvavidas);
+      setCargando(false);
+    }
+    function normalizarCaja(c) {
+      return { cuentas: c.cuentas || {}, movimientos: c.movimientos || [], arqueos: c.arqueos || [],
+        config: { cuentas: (c.config && c.config.cuentas) || CUENTAS_DEF } };
+    }
+    async function guardar(nueva) {
+      setCaja(nueva);
+      if (sb) { try { await sb.from("caja_state").upsert({ id:1, data:nueva }); } catch(e){ notificar("Error al sincronizar"); } }
+      else { try { localStorage.setItem("caja-luz-v1", JSON.stringify(nueva)); } catch(e){} }
+    }
+
+    const cuentas = (caja.config && caja.config.cuentas) || CUENTAS_DEF;
+
+    /* saldos calculados a partir de los movimientos + aportes base */
+    const saldos = useMemo(() => {
+      const s = {}; cuentas.forEach((c)=> s[c] = Number(caja.cuentas[c] || 0));
+      (caja.movimientos || []).forEach((m) => {
+        if (m.tipo === "ingreso") s[m.cuenta] = (s[m.cuenta]||0) + Number(m.monto);
+        else if (m.tipo === "egreso") s[m.cuenta] = (s[m.cuenta]||0) - Number(m.monto);
+        else if (m.tipo === "transferencia") {
+          s[m.cuenta] = (s[m.cuenta]||0) - Number(m.monto);
+          s[m.cuentaDest] = (s[m.cuentaDest]||0) + Number(m.monto);
+        }
+      });
+      return s;
+    }, [caja, cuentas]);
+
+    const totalDisponible = useMemo(()=> Object.values(saldos).reduce((a,b)=>a+b,0), [saldos]);
+    /* dinero en proceso (canje) y utilidad, calculados desde los trámites */
+    const resumenTramites = useMemo(() => {
+      const cots = (tramitesDb.cotizaciones || []).filter((c)=> c.modo !== "cotizacion");
+      let canjeCobrado = 0, gananciaCobrada = 0, saldoPorCobrar = 0, canjeTotal = 0, gananciaTotal = 0;
+      const registrados = new Set((caja.movimientos||[]).filter(m=>m.tramiteId).map(m=>m.tramiteId));
+      const pagadosATransitoPorTramite = new Set((caja.movimientos||[]).filter(m=>m.tramiteId && m.categoria==="Pago a tránsito (canje)").map(m=>m.tramiteId));
+      const pendientesRegistrar = [];
+      const tramitesActivosPendientesTransito = [];
+      cots.forEach((c) => {
+        const { ganancia, canje } = clasificarCotizacion(c);
+        const total = ganancia + canje;
+        const abono = (Number(c.abonoEfectivo)||0) + (Number(c.abonoTransferencia)||0);
+        canjeTotal += canje; gananciaTotal += ganancia;
+        saldoPorCobrar += Math.max(0, total - abono);
+        // proporción cobrada
+        const prop = total > 0 ? Math.min(1, abono/total) : 0;
+        canjeCobrado += canje * prop;
+        gananciaCobrada += ganancia * prop;
+        if (abono > 0 && !registrados.has(c.id)) pendientesRegistrar.push({ c, ganancia, canje, abono });
+        // trámites activos (no entregados) que ya cobraron canje pero aún no se ha pagado a tránsito
+        if (!ESTADOS_RESUELTOS.includes(c.estado) && canje > 0 && abono > 0 && !pagadosATransitoPorTramite.has(c.id)) {
+          tramitesActivosPendientesTransito.push({ c, canjePendiente: canje * prop });
+        }
+      });
+      return { canjeCobrado, gananciaCobrada, saldoPorCobrar, canjeTotal, gananciaTotal, pendientesRegistrar, tramitesActivosPendientesTransito, totalTramites: cots.length };
+    }, [tramitesDb, caja]);
+
+    /* dinero en proceso = canje cobrado que aún no se ha pagado a tránsito */
+    const pagadoATransito = useMemo(()=>
+      (caja.movimientos||[]).filter(m=> m.categoria === "Pago a tránsito (canje)").reduce((a,m)=>a+Number(m.monto),0),
+    [caja]);
+    const dineroEnProceso = Math.max(0, resumenTramites.canjeCobrado - pagadoATransito);
+    const utilidadReal = resumenTramites.gananciaCobrada;
+
+    function agregarMovimiento() {
+      const monto = Number(soloNum(movMonto));
+      if (!monto) { notificar("Escribe un monto válido"); return; }
+      let origen = movCuenta, destino = movCuentaDest, categoria = movCat;
+      if (movTipo === "transferencia") {
+        if (movCat === "Retirar dinero de banco") { destino = "Efectivo"; if (origen === "Efectivo") origen = cuentas.find(c=>c!=="Efectivo"); }
+        else if (movCat === "Consignar dinero a banco") { origen = "Efectivo"; if (destino === "Efectivo") destino = cuentas.find(c=>c!=="Efectivo"); }
+        if (origen === destino) { notificar("El origen y el destino no pueden ser iguales"); return; }
+      }
+      const mov = { id: uid(), tipo: movTipo, cuenta: origen,
+        cuentaDest: movTipo==="transferencia" ? destino : null,
+        monto, categoria: movTipo==="transferencia" ? categoria : movCat,
+        nota: movNota.trim(), fecha: movFecha, creado: ahora() };
+      guardar({ ...caja, movimientos: [mov, ...caja.movimientos] });
+      setMovMonto(""); setMovNota("");
+      notificar("Movimiento registrado");
+    }
+    function eliminarMovimiento(id) {
+      if (!window.confirm("¿Eliminar este movimiento?")) return;
+      guardar({ ...caja, movimientos: caja.movimientos.filter(m=>m.id!==id) });
+    }
+
+    /* registrar el abono de un trámite como movimiento(s) de caja */
+    function registrarAbonoTramite(item, bancoTransfer) {
+      const { c } = item;
+      const efe = Number(c.abonoEfectivo)||0, tra = Number(c.abonoTransferencia)||0;
+      const info = { numero: c.numero, placa: c.vehiculo.placa, cliente: c.cliente.nombre, tipo: (c.tramite && c.tramite.tipo) || "Trámite" };
+      const movs = [];
+      if (efe > 0) movs.push({ id: uid(), tipo:"ingreso", cuenta:"Efectivo", cuentaDest:null, monto: efe,
+        categoria:"Abono de trámite", nota:`${c.numero} · ${c.vehiculo.placa} (efectivo)`, fecha: hoy(), creado: ahora(), tramiteId: c.id, tramiteInfo: info });
+      if (tra > 0) movs.push({ id: uid(), tipo:"ingreso", cuenta: bancoTransfer || "Nequi", cuentaDest:null, monto: tra,
+        categoria:"Abono de trámite", nota:`${c.numero} · ${c.vehiculo.placa} (${bancoTransfer || "transferencia"})`, fecha: hoy(), creado: ahora(), tramiteId: c.id, tramiteInfo: info });
+      guardar({ ...caja, movimientos: [...movs, ...caja.movimientos] });
+      notificar(`Abono de ${c.numero} registrado en caja`);
+    }
+
+    const movsFiltrados = useMemo(()=>{
+      let ms = caja.movimientos || [];
+      if (filtroFecha) ms = ms.filter(m=>m.fecha === filtroFecha);
+      return ms;
+    }, [caja, filtroFecha]);
+
+    const totalesDia = useMemo(()=>{
+      const f = filtroFecha || hoy();
+      const ms = (caja.movimientos||[]).filter(m=>m.fecha===f);
+      const ing = ms.filter(m=>m.tipo==="ingreso").reduce((a,m)=>a+Number(m.monto),0);
+      const egr = ms.filter(m=>m.tipo==="egreso").reduce((a,m)=>a+Number(m.monto),0);
+      // canje y utilidad del día: se calcula de los abonos de trámite registrados ese día
+      let canje = 0, utilidad = 0;
+      ms.filter(m=>m.tramiteId && m.tipo==="ingreso").forEach((m)=>{
+        const cot = (tramitesDb.cotizaciones||[]).find(c=>c.id===m.tramiteId);
+        if (!cot) return;
+        const { ganancia, canje: cj } = clasificarCotizacion(cot);
+        const total = ganancia + cj;
+        if (total<=0) return;
+        utilidad += m.monto * (ganancia/total);
+        canje += m.monto * (cj/total);
+      });
+      return { ing, egr, neto: ing-egr, canje, utilidad, fecha:f };
+    }, [caja, filtroFecha, tramitesDb]);
+
+    function guardarSaldoInicial(cuenta, valor) {
+      const n = Number(soloNum(valor)) || 0;
+      guardar({ ...caja, cuentas: { ...caja.cuentas, [cuenta]: n } });
+    }
+    function guardarConfigNum(campo, valor) {
+      const n = Number(soloNum(valor)) || 0;
+      guardar({ ...caja, config: { ...caja.config, [campo]: n } });
+    }
+    const metaUtilidad = Number((caja.config && caja.config.metaUtilidad) || 0);
+    const alertaEfectivo = Number((caja.config && caja.config.alertaEfectivo) || 0);
+    const utilidadMesActual = useMemo(()=>{
+      const mesActual = hoy().slice(0,7);
+      let u = 0;
+      (caja.movimientos||[]).filter(m=>m.tramiteId && m.tipo==="ingreso" && (m.fecha||"").slice(0,7)===mesActual).forEach((m)=>{
+        const cot=(tramitesDb.cotizaciones||[]).find(c=>c.id===m.tramiteId); if(!cot) return;
+        const {ganancia,canje:cj}=clasificarCotizacion(cot); const t=ganancia+cj; if(t<=0) return;
+        u += m.monto*(ganancia/t);
+      });
+      return u;
+    }, [caja, tramitesDb]);
+
+    const salir = () => { if (onSalirCaja) onSalirCaja(); };
+    if (cargando) return <div style={{minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:"#F4F6FA", fontFamily:"'Segoe UI',system-ui,sans-serif", color:NAVY, fontWeight:700}}>Cargando Caja MoviGestión…</div>;
+
+    /* ================= LOGIN ================= */
+    if (vista === "login") return (
+      <div style={{minHeight:"100vh", background:`linear-gradient(150deg, ${NAVY} 0%, #12305F 55%, ${BLUE} 130%)`, display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Segoe UI',system-ui,sans-serif", padding:20}}>
+        <div style={{width:"100%", maxWidth:400}}>
+          <div style={{textAlign:"center", marginBottom:22, display:"flex", justifyContent:"center"}}>
+            <div style={{background:"#fff", borderRadius:14, padding:"14px 22px"}}><img src={LOGO} alt="MoviGestión Luz" style={{height:44, display:"block"}} /></div>
+          </div>
+          <div style={{...S.card, padding:28}}>
+            <h2 style={{...S.h2, marginBottom:4}}>Caja de la empresa</h2>
+            <p style={{fontSize:13.5, color:"#5A6478", marginTop:4, marginBottom:18}}>Control financiero de MoviGestión Luz. Ingresa el PIN para continuar.</p>
+            <Campo label="PIN de acceso">
+              <input style={S.input} type="password" value={pin} onChange={(e)=>{setPin(e.target.value); setErrPin("");}}
+                onKeyDown={(e)=>{ if(e.key==="Enter"){ pin===PIN_CAJA ? (setVista("panel"), setPin("")) : setErrPin("PIN incorrecto."); }}}
+                placeholder="••••••••" />
+            </Campo>
+            {errPin && <div style={{color:RED, fontSize:13, marginBottom:10, fontWeight:600}}>{errPin}</div>}
+            <button style={{...S.btnP, width:"100%"}} onClick={()=> pin===PIN_CAJA ? (setVista("panel"), setPin("")) : setErrPin("PIN incorrecto.")}>Entrar</button>
+          </div>
+        </div>
+      </div>
+    );
+
+    /* ================= PANEL ================= */
+    if (vista === "panel") {
+      const Kpi = ({ label, valor, color, sub }) => (
+        <div style={{...S.card, padding:"18px 20px"}}>
+          <div style={{fontSize:12, fontWeight:700, color:"#5A6478", textTransform:"uppercase", letterSpacing:".05em"}}>{label}</div>
+          <div style={{fontSize:28, fontWeight:900, color: color || NAVY, marginTop:4}}>{valor}</div>
+          {sub && <div style={{fontSize:12.5, color:"#5A6478", marginTop:2}}>{sub}</div>}
+        </div>
+      );
+      return (
+        <Shell vista={vista} setVista={setVista} onSalir={salir} toast={toast}>
+          <h2 style={{...S.h2, fontSize:26, marginBottom:16}}>Panel financiero</h2>
+
+          <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(200px,1fr))", gap:14, marginBottom:18}}>
+            <Kpi label="Total disponible" valor={fmt(totalDisponible)} color={NAVY} sub="Suma de todas las cuentas" />
+            <Kpi label="Dinero en proceso (canje)" valor={fmt(dineroEnProceso)} color={PURPLE} sub="Reservado para pagar a tránsito" />
+            <Kpi label="Disponible libre" valor={fmt(Math.max(0, totalDisponible - dineroEnProceso))} color={GREEN} sub="Lo que no está comprometido" />
+            <Kpi label="Utilidad de trámites" valor={fmt(utilidadReal)} color={GOLD} sub="Honorarios + papelería + improntas cobrados" />
+          </div>
+
+          {alertaEfectivo > 0 && (saldos["Efectivo"]||0) < alertaEfectivo && <div style={{...S.card, marginBottom:16, borderLeft:"4px solid "+RED, background:"#FDF3F1"}}>
+            <div style={{fontWeight:800, color:RED}}>⚠ Efectivo bajo</div>
+            <div style={{fontSize:13.5, color:"#5A6478", marginTop:2}}>Tienes {fmt(saldos["Efectivo"]||0)} en efectivo, por debajo del mínimo de {fmt(alertaEfectivo)} que configuraste. Puede que no alcance para pagar trámites en tránsito.</div>
+          </div>}
+
+          <Sec titulo="Saldo por cuenta">
+            <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(210px,1fr))", gap:12}}>
+              {cuentas.map((c)=>(
+                <div key={c} style={{border:"1px solid #E8ECF3", borderRadius:14, padding:"16px 18px", borderLeft:"5px solid "+(COLOR_CUENTA[c]||BLUE)}}>
+                  <div style={{fontSize:13, fontWeight:700, color:"#5A6478"}}>{c}</div>
+                  <div style={{fontSize:23, fontWeight:900, color: (saldos[c]||0) < 0 ? RED : NAVY, marginTop:3}}>{fmt(saldos[c]||0)}</div>
+                </div>
+              ))}
+            </div>
+            <details style={{marginTop:14}}>
+              <summary style={{fontSize:13.5, color:BLUE, fontWeight:700, cursor:"pointer"}}>Ajustar saldo inicial de cada cuenta</summary>
+              <div style={{fontSize:13, color:"#5A6478", margin:"10px 0"}}>El saldo inicial es el dinero que ya había en cada cuenta antes de empezar a usar la app. Los movimientos se suman o restan sobre este.</div>
+              <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(200px,1fr))", gap:12}}>
+                {cuentas.map((c)=>(
+                  <div key={c}>
+                    <label style={S.label}>{c} — saldo inicial</label>
+                    <input inputMode="numeric" style={{...S.input, textAlign:"right", fontWeight:700}} value={miles(caja.cuentas[c]||"")} placeholder="0"
+                      onChange={(e)=>guardarSaldoInicial(c, e.target.value)} />
+                  </div>
+                ))}
+              </div>
+            </details>
+          </Sec>
+
+          <Sec titulo={"Movimiento del día · " + totalesDia.fecha}>
+            <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(140px,1fr))", gap:12}}>
+              <div><div style={S.label}>Ingresos</div><div style={{fontSize:22, fontWeight:900, color:GREEN}}>{fmt(totalesDia.ing)}</div></div>
+              <div><div style={S.label}>Egresos</div><div style={{fontSize:22, fontWeight:900, color:RED}}>{fmt(totalesDia.egr)}</div></div>
+              <div><div style={S.label}>Neto del día</div><div style={{fontSize:22, fontWeight:900, color: totalesDia.neto<0?RED:NAVY}}>{fmt(totalesDia.neto)}</div></div>
+              <div><div style={S.label}>Canje del día</div><div style={{fontSize:22, fontWeight:900, color:PURPLE}}>{fmt(totalesDia.canje)}</div></div>
+              <div><div style={S.label}>Utilidad del día</div><div style={{fontSize:22, fontWeight:900, color:GOLD}}>{fmt(totalesDia.utilidad)}</div></div>
+            </div>
+          </Sec>
+
+          {resumenTramites.pendientesRegistrar.length > 0 && <div style={{...S.card, marginBottom:16, borderLeft:"4px solid "+BLUE}}>
+            <div style={{fontWeight:800, color:NAVY, marginBottom:6}}>Hay {resumenTramites.pendientesRegistrar.length} abono(s) de trámites sin registrar en caja</div>
+            <div style={{fontSize:13.5, color:"#5A6478", marginBottom:10}}>Puedes ingresarlos automáticamente desde la sección “Desde trámites”.</div>
+            <button style={S.btnP} onClick={()=>setVista("tramites")}>Ver pendientes</button>
+          </div>}
+
+          <Sec titulo="Últimos movimientos" extra={<button style={{...S.btnS, padding:"8px 14px"}} onClick={()=>setVista("resumen")}>Ver todos</button>}>
+            {(caja.movimientos||[]).length===0 && <div style={{color:"#9AA3B2", fontSize:14}}>Aún no hay movimientos registrados.</div>}
+            {(caja.movimientos||[]).slice(0,10).map((m)=>{
+              const color=m.tipo==="ingreso"?GREEN:m.tipo==="egreso"?RED:BLUE; const signo=m.tipo==="ingreso"?"+":m.tipo==="egreso"?"−":"↔";
+              return (
+                <div key={m.id} style={{display:"flex", justifyContent:"space-between", alignItems:"center", padding:"10px 0", borderBottom:"1px solid #EEF1F7", gap:10}}>
+                  <div style={{minWidth:0}}>
+                    <div style={{fontWeight:700, color:NAVY, fontSize:14}}>{m.tipo==="transferencia"?`${m.cuenta} → ${m.cuentaDest}`:m.categoria}</div>
+                    <div style={{fontSize:12, color:"#5A6478", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>{m.fecha} · {m.cuenta}{m.nota?" · "+m.nota:""}</div>
+                  </div>
+                  <div style={{fontWeight:900, color, fontSize:14.5, flexShrink:0}}>{signo}{fmt(m.monto)}</div>
+                </div>
+              );
+            })}
+          </Sec>
+
+          <Sec titulo="Meta de utilidad del mes">
+            <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8, flexWrap:"wrap", gap:8}}>
+              <div style={{fontSize:14, color:"#5A6478"}}>Utilidad de este mes: <b style={{color:GOLD}}>{fmt(utilidadMesActual)}</b>{metaUtilidad>0 && <> de <b>{fmt(metaUtilidad)}</b></>}</div>
+              {metaUtilidad>0 && <b style={{color: utilidadMesActual>=metaUtilidad?GREEN:NAVY}}>{Math.min(100, Math.round(utilidadMesActual/metaUtilidad*100))}%</b>}
+            </div>
+            {metaUtilidad>0 && <div style={{background:"#EEF1F7", borderRadius:8, height:10, overflow:"hidden"}}>
+              <div style={{width:Math.min(100, utilidadMesActual/metaUtilidad*100)+"%", height:"100%", background: utilidadMesActual>=metaUtilidad?GREEN:GOLD}} />
+            </div>}
+            <details style={{marginTop:12}}>
+              <summary style={{fontSize:13, color:BLUE, fontWeight:700, cursor:"pointer"}}>Configurar meta y alertas</summary>
+              <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(200px,1fr))", gap:12, marginTop:10}}>
+                <div><label style={S.label}>Meta de utilidad mensual</label>
+                  <input inputMode="numeric" style={{...S.input, textAlign:"right", fontWeight:700}} value={miles(caja.config?.metaUtilidad||"")} placeholder="0" onChange={(e)=>guardarConfigNum("metaUtilidad", e.target.value)} /></div>
+                <div><label style={S.label}>Alertar si Efectivo baja de</label>
+                  <input inputMode="numeric" style={{...S.input, textAlign:"right", fontWeight:700}} value={miles(caja.config?.alertaEfectivo||"")} placeholder="0" onChange={(e)=>guardarConfigNum("alertaEfectivo", e.target.value)} /></div>
+              </div>
+            </details>
+          </Sec>
+        </Shell>
+      );
+    }
+    /* ================= MOVIMIENTOS ================= */
+    if (vista === "movimientos") {
+      const cats = movTipo === "ingreso" ? CAT_INGRESO : movTipo === "egreso" ? CAT_EGRESO : CAT_TRANSFER;
+      const TipoBtn = ({ v, label, color }) => (
+        <button onClick={()=>{ setMovTipo(v); setMovCat((v==="ingreso"?CAT_INGRESO:v==="egreso"?CAT_EGRESO:CAT_TRANSFER)[0]); }}
+          style={{flex:1, padding:"12px", borderRadius:10, border:"2px solid "+(movTipo===v?color:"#E0E5EE"),
+            background: movTipo===v ? color : "#fff", color: movTipo===v ? "#fff" : "#5A6478", fontWeight:800, fontSize:14.5, cursor:"pointer"}}>{label}</button>
+      );
+      // en retiro: banco -> efectivo; en consignar: efectivo -> banco
+      const bancos = cuentas.filter((c)=>c!=="Efectivo");
+      const esRetiro = movTipo==="transferencia" && movCat==="Retirar dinero de banco";
+      const esConsignar = movTipo==="transferencia" && movCat==="Consignar dinero a banco";
+      return (
+        <Shell vista={vista} setVista={setVista} onSalir={salir} toast={toast}>
+          <h2 style={{...S.h2, fontSize:26, marginBottom:16}}>Movimientos</h2>
+          <Sec titulo="Registrar movimiento">
+            <div style={{display:"flex", gap:8, marginBottom:14}}>
+              <TipoBtn v="ingreso" label="Ingreso" color={GREEN} />
+              <TipoBtn v="egreso" label="Egreso" color={RED} />
+              <TipoBtn v="transferencia" label="Transferencia" color={BLUE} />
+            </div>
+            {movTipo==="transferencia" && <Campo label="Tipo de transferencia">
+              <select style={S.input} value={movCat} onChange={(e)=>setMovCat(e.target.value)}>
+                {CAT_TRANSFER.map((c)=><option key={c}>{c}</option>)}
+              </select>
+            </Campo>}
+            <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(200px,1fr))", gap:"0 14px"}}>
+              {movTipo!=="transferencia" && <Campo label="Cuenta">
+                <select style={S.input} value={movCuenta} onChange={(e)=>setMovCuenta(e.target.value)}>
+                  {cuentas.map((c)=><option key={c}>{c}</option>)}
+                </select>
+              </Campo>}
+              {movTipo==="transferencia" && <Campo label={esRetiro ? "Banco de origen" : esConsignar ? "Sale de Efectivo" : "Desde la cuenta"}>
+                {esConsignar
+                  ? <input style={{...S.input, background:"#F4F6FA"}} value="Efectivo" disabled />
+                  : <select style={S.input} value={esRetiro ? (bancos.includes(movCuenta)?movCuenta:bancos[0]) : movCuenta} onChange={(e)=>setMovCuenta(e.target.value)}>
+                      {(esRetiro ? bancos : cuentas).map((c)=><option key={c}>{c}</option>)}
+                    </select>}
+              </Campo>}
+              {movTipo==="transferencia" && <Campo label={esConsignar ? "Banco de destino" : esRetiro ? "Entra a Efectivo" : "Hacia la cuenta"}>
+                {esRetiro
+                  ? <input style={{...S.input, background:"#F4F6FA"}} value="Efectivo" disabled />
+                  : <select style={S.input} value={esConsignar ? (bancos.includes(movCuentaDest)?movCuentaDest:bancos[0]) : movCuentaDest} onChange={(e)=>setMovCuentaDest(e.target.value)}>
+                      {(esConsignar ? bancos : cuentas).map((c)=><option key={c}>{c}</option>)}
+                    </select>}
+              </Campo>}
+              {movTipo!=="transferencia" && <Campo label="Categoría">
+                <select style={S.input} value={movCat} onChange={(e)=>setMovCat(e.target.value)}>
+                  {cats.map((c)=><option key={c}>{c}</option>)}
+                </select>
+              </Campo>}
+              <Campo label="Monto"><input inputMode="numeric" style={{...S.input, textAlign:"right", fontWeight:700}} value={miles(movMonto)} onChange={(e)=>setMovMonto(soloNum(e.target.value))} placeholder="0" /></Campo>
+              <Campo label="Fecha"><input type="date" style={S.input} value={movFecha} onChange={(e)=>setMovFecha(e.target.value)} /></Campo>
+            </div>
+            <Campo label="Nota (opcional)"><input style={S.input} value={movNota} onChange={(e)=>setMovNota(e.target.value)} placeholder="Ej: pago de arriendo, almuerzo, etc." /></Campo>
+            <button style={S.btnP} onClick={agregarMovimiento}>Registrar {movTipo}</button>
+          </Sec>
+        </Shell>
+      );
+    }
+
+    /* ================= RESUMEN DE MOVIMIENTOS ================= */
+    if (vista === "resumen") {
+      // agrupar por día, orden más reciente primero, y dentro del día por hora de creación
+      const grupos = {};
+      movsFiltrados.forEach((m)=>{ (grupos[m.fecha] = grupos[m.fecha] || []).push(m); });
+      const diasOrdenados = Object.keys(grupos).sort((a,b)=> a<b?1:-1);
+      return (
+        <Shell vista={vista} setVista={setVista} onSalir={salir} toast={toast}>
+          <h2 style={{...S.h2, fontSize:26, marginBottom:6}}>Movimientos</h2>
+          <p style={{fontSize:14, color:"#5A6478", marginTop:0, marginBottom:16}}>Resumen completo, ordenado por día y hora de creación. Toca un movimiento para ver todos sus detalles.</p>
+          <Sec titulo={"Todos los movimientos (" + movsFiltrados.length + ")"} extra={<input type="date" style={{...S.input, width:"auto", padding:"8px 10px"}} value={filtroFecha} onChange={(e)=>setFiltroFecha(e.target.value)} />}>
+            {filtroFecha && <button style={{...S.btnS, marginBottom:12, padding:"7px 14px"}} onClick={()=>setFiltroFecha("")}>Ver todos</button>}
+            {movsFiltrados.length === 0 && <div style={{color:"#9AA3B2", fontSize:14, padding:"10px 0"}}>Sin movimientos.</div>}
+            {diasOrdenados.map((dia)=>(
+              <div key={dia} style={{marginBottom:18}}>
+                <div style={{fontSize:12.5, fontWeight:800, color:BLUE, textTransform:"uppercase", letterSpacing:".05em", margin:"6px 0 8px", paddingBottom:4, borderBottom:"1.5px solid #E8ECF3"}}>{dia}</div>
+                {grupos[dia].map((m)=><FilaMovimiento key={m.id} m={m} onEliminar={eliminarMovimiento} />)}
+              </div>
+            ))}
+          </Sec>
+        </Shell>
+      );
+    }
+    /* ================= ARQUEO ================= */
+    if (vista === "arqueo") {
+      return <ArqueoView caja={caja} cuentas={cuentas} saldos={saldos} guardar={guardar} notificar={notificar} Shell={Shell} vista={vista} setVista={setVista} salir={salir} toast={toast} />;
+    }
+
+    /* ================= DESDE TRÁMITES ================= */
+    if (vista === "tramites") {
+      const r = resumenTramites;
+      return (
+        <Shell vista={vista} setVista={setVista} onSalir={salir} toast={toast}>
+          <h2 style={{...S.h2, fontSize:26, marginBottom:16}}>Dinero desde los trámites</h2>
+          <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(200px,1fr))", gap:14, marginBottom:18}}>
+            <div style={S.card}><div style={S.label}>Utilidad cobrada</div><div style={{fontSize:24, fontWeight:900, color:GOLD}}>{fmt(r.gananciaCobrada)}</div><div style={{fontSize:12, color:"#5A6478"}}>Honorarios, papelería, improntas</div></div>
+            <div style={S.card}><div style={S.label}>Canje cobrado</div><div style={{fontSize:24, fontWeight:900, color:PURPLE}}>{fmt(r.canjeCobrado)}</div><div style={{fontSize:12, color:"#5A6478"}}>Para pagar a tránsito</div></div>
+            <div style={S.card}><div style={S.label}>Pagado a tránsito</div><div style={{fontSize:24, fontWeight:900, color:NAVY}}>{fmt(pagadoATransito)}</div></div>
+            <div style={S.card}><div style={S.label}>Falta pagar a tránsito</div><div style={{fontSize:24, fontWeight:900, color: dineroEnProceso>0?PURPLE:GREEN}}>{fmt(dineroEnProceso)}</div></div>
+            <div style={S.card}><div style={S.label}>Saldo por cobrar a clientes</div><div style={{fontSize:24, fontWeight:900, color:RED}}>{fmt(r.saldoPorCobrar)}</div></div>
+          </div>
+
+          <Sec titulo={"Abonos sin registrar en caja ("+r.pendientesRegistrar.length+")"}>
+            {r.pendientesRegistrar.length === 0 && <div style={{color:"#9AA3B2", fontSize:14}}>Todos los abonos ya están registrados en la caja.</div>}
+            {r.pendientesRegistrar.map((it)=>(
+              <FilaAbono key={it.c.id} it={it} cuentas={cuentas} onRegistrar={registrarAbonoTramite} />
+            ))}
+          </Sec>
+
+          <Sec titulo={"Trámites activos con canje pendiente de pagar a tránsito ("+r.tramitesActivosPendientesTransito.length+")"}>
+            {r.tramitesActivosPendientesTransito.length === 0 && <div style={{color:"#9AA3B2", fontSize:14}}>No hay trámites en curso con dinero de canje sin pagar a tránsito.</div>}
+            {r.tramitesActivosPendientesTransito.map((it)=>(
+              <div key={it.c.id} style={{display:"flex", justifyContent:"space-between", alignItems:"center", padding:"10px 0", borderBottom:"1px solid #EEF1F7", gap:10, flexWrap:"wrap"}}>
+                <div>
+                  <div style={{fontWeight:700, color:NAVY}}>{it.c.numero} · {it.c.vehiculo.placa}</div>
+                  <div style={{fontSize:12.5, color:"#5A6478"}}>{it.c.estado}</div>
+                </div>
+                <div style={{fontWeight:900, color:PURPLE, fontSize:15}}>{fmt(it.canjePendiente)}</div>
+              </div>
+            ))}
+            {r.tramitesActivosPendientesTransito.length > 0 && <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", paddingTop:12, marginTop:4, borderTop:"2px solid "+NAVY}}>
+              <b style={{color:NAVY}}>Total pendiente de pagar a tránsito</b>
+              <b style={{color:PURPLE, fontSize:17}}>{fmt(r.tramitesActivosPendientesTransito.reduce((a,it)=>a+it.canjePendiente,0))}</b>
+            </div>}
+          </Sec>
+
+          <div style={{...S.card, background:"#F7F9FC"}}>
+            <div style={{fontWeight:800, color:NAVY, marginBottom:8}}>¿Cómo se clasifica el dinero de un trámite?</div>
+            <div style={{fontSize:13.5, color:"#5A6478", lineHeight:1.7}}>
+              <b style={{color:GOLD}}>Utilidad (de ustedes):</b> {CONCEPTOS_GANANCIA.join(", ")}.<br/>
+              <b style={{color:PURPLE}}>Canje (pasa a tránsito):</b> {CONCEPTOS_CANJE.join(", ")}.<br/>
+              El dinero en proceso es el canje que ya cobraron pero aún no han pagado a tránsito.
+            </div>
+          </div>
+        </Shell>
+      );
+    }
+
+    /* ================= INFORME MENSUAL ================= */
+    if (vista === "informe") {
+      return <InformeView caja={caja} cuentas={cuentas} tramitesDb={tramitesDb} notificar={notificar} Shell={Shell} vista={vista} setVista={setVista} salir={salir} toast={toast} />;
+    }
+
+    return null;
+  }
+
+  /* ================= FILA DE ABONO PENDIENTE ================= */
+  function FilaMovimiento({ m, onEliminar }) {
+    const [abierto, setAbierto] = useState(false);
+    const color = m.tipo==="ingreso" ? GREEN : m.tipo==="egreso" ? RED : BLUE;
+    const signo = m.tipo==="ingreso" ? "+" : m.tipo==="egreso" ? "−" : "↔";
+    const etiquetaTipo = m.tipo==="ingreso" ? "Ingreso" : m.tipo==="egreso" ? "Egreso" : "Transferencia";
+    return (
+      <div style={{borderBottom:"1px solid #EEF1F7"}}>
+        <div onClick={()=>setAbierto(!abierto)} style={{display:"flex", justifyContent:"space-between", alignItems:"center", padding:"11px 0", gap:10, cursor:"pointer"}}>
+          <div style={{minWidth:0}}>
+            <div style={{fontWeight:700, color:NAVY, fontSize:14.5}}>
+              {m.tipo==="transferencia" ? `${m.cuenta} → ${m.cuentaDest}` : `${m.categoria}`}
+            </div>
+            <div style={{fontSize:12.5, color:"#5A6478", marginTop:2, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>
+              {m.tipo!=="transferencia" && <span style={{...tag("#EEF2F8","#5A6478"), fontSize:11, marginRight:6}}>{m.cuenta}</span>}
+              {m.tramiteInfo && <span style={{...tag("#EAF1FE","#1E6FEB"), fontSize:11, marginRight:6}}>{m.tramiteInfo.numero} · {m.tramiteInfo.placa}</span>}
+              {m.creado || m.fecha}{m.nota ? " · "+m.nota : ""}
+            </div>
+          </div>
+          <div style={{textAlign:"right", flexShrink:0, display:"flex", alignItems:"center", gap:8}}>
+            <div style={{fontWeight:900, color, fontSize:15}}>{signo}{fmt(m.monto)}</div>
+            <span style={{color:"#9AA3B2", fontSize:12}}>{abierto ? "▲" : "▼"}</span>
+          </div>
+        </div>
+        {abierto && <div style={{background:"#F7F9FC", borderRadius:10, padding:"12px 14px", marginBottom:10, fontSize:13}}>
+          <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(160px,1fr))", gap:8}}>
+            <div><span style={{color:"#5A6478"}}>Tipo: </span><b>{etiquetaTipo}</b></div>
+            <div><span style={{color:"#5A6478"}}>Monto: </span><b>{fmt(m.monto)}</b></div>
+            {m.tipo==="transferencia" ? <>
+              <div><span style={{color:"#5A6478"}}>Desde: </span><b>{m.cuenta}</b></div>
+              <div><span style={{color:"#5A6478"}}>Hacia: </span><b>{m.cuentaDest}</b></div>
+              <div><span style={{color:"#5A6478"}}>Movimiento: </span><b>{m.categoria}</b></div>
+            </> : <>
+              <div><span style={{color:"#5A6478"}}>Cuenta: </span><b>{m.cuenta}</b></div>
+              <div><span style={{color:"#5A6478"}}>Categoría: </span><b>{m.categoria}</b></div>
+            </>}
+            <div><span style={{color:"#5A6478"}}>Fecha: </span><b>{m.fecha}</b></div>
+            <div><span style={{color:"#5A6478"}}>Creado: </span><b>{m.creado || "—"}</b></div>
+            {m.tramiteId && !m.tramiteInfo && <div><span style={{color:"#5A6478"}}>Origen: </span><b>Abono de trámite</b></div>}
+            {m.ajuste && <div><span style={{color:"#5A6478"}}>Origen: </span><b>Ajuste de arqueo</b></div>}
+          </div>
+          {m.tramiteInfo && <div style={{marginTop:10, paddingTop:10, borderTop:"1px solid #E8ECF3"}}>
+            <div style={{fontSize:11.5, fontWeight:800, color:BLUE, textTransform:"uppercase", letterSpacing:".05em", marginBottom:6}}>Trámite relacionado</div>
+            <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(160px,1fr))", gap:8}}>
+              <div><span style={{color:"#5A6478"}}>Número: </span><b>{m.tramiteInfo.numero}</b></div>
+              <div><span style={{color:"#5A6478"}}>Placa: </span><b>{m.tramiteInfo.placa}</b></div>
+              <div><span style={{color:"#5A6478"}}>Cliente: </span><b>{m.tramiteInfo.cliente}</b></div>
+              <div><span style={{color:"#5A6478"}}>Trámite: </span><b>{m.tramiteInfo.tipo}</b></div>
+            </div>
+          </div>}
+          {m.nota && <div style={{marginTop:8, paddingTop:8, borderTop:"1px solid #E8ECF3"}}><span style={{color:"#5A6478"}}>Nota: </span>{m.nota}</div>}
+          <button onClick={(e)=>{ e.stopPropagation(); onEliminar(m.id); }} style={{background:"none", border:"none", color:"#C0392B", fontSize:12.5, fontWeight:700, cursor:"pointer", padding:0, marginTop:10}}>Eliminar movimiento</button>
+        </div>}
+      </div>
+    );
+  }
+
+  function FilaAbono({ it, cuentas, onRegistrar }) {
+    const bancos = cuentas.filter((c)=> c !== "Efectivo");
+    const [banco, setBanco] = useState((it.c.bancoTransferencia && bancos.includes(it.c.bancoTransferencia)) ? it.c.bancoTransferencia : (bancos[0] || "Nequi"));
+    const efe = Number(it.c.abonoEfectivo)||0, tra = Number(it.c.abonoTransferencia)||0;
+    return (
+      <div style={{padding:"12px 0", borderBottom:"1px solid #EEF1F7"}}>
+        <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:10, flexWrap:"wrap"}}>
+          <div>
+            <div style={{fontWeight:700, color:NAVY}}>{it.c.numero} · {it.c.vehiculo.placa}</div>
+            <div style={{fontSize:12.5, color:"#5A6478", marginTop:2}}>
+              {efe>0 && <span>Efectivo {fmt(efe)}</span>}{efe>0 && tra>0 && " · "}{tra>0 && <span>Transferencia {fmt(tra)}</span>}
+            </div>
+            <div style={{fontSize:12, color:"#5A6478", marginTop:2}}>Utilidad {fmt(it.ganancia)} · Canje {fmt(it.canje)}</div>
+          </div>
+          <div style={{display:"flex", gap:8, alignItems:"center", flexWrap:"wrap"}}>
+            {tra > 0 && <select value={banco} onChange={(e)=>setBanco(e.target.value)}
+              style={{...S.input, width:"auto", padding:"9px 11px", fontSize:14}}>
+              {bancos.map((b)=><option key={b}>{b}</option>)}
+            </select>}
+            <button style={{...S.btnP, padding:"10px 16px"}} onClick={()=>onRegistrar(it, banco)}>Registrar</button>
+          </div>
+        </div>
+        {tra > 0 && <div style={{fontSize:11.5, color:"#9AA3B2", marginTop:6}}>La transferencia de {fmt(tra)} entrará a <b>{banco}</b>.</div>}
+      </div>
+    );
+  }
+
+  /* ================= COMPONENTE INFORME MENSUAL ================= */
+  function InformeView({ caja, cuentas, tramitesDb, notificar, Shell, vista, setVista, salir, toast }) {
+    const [mes, setMes] = useState(hoy().slice(0,7)); // YYYY-MM
+
+    const datos = useMemo(()=>{
+      const movs = (caja.movimientos||[]).filter(m=> (m.fecha||"").slice(0,7) === mes);
+      const ing = movs.filter(m=>m.tipo==="ingreso").reduce((a,m)=>a+Number(m.monto),0);
+      const egr = movs.filter(m=>m.tipo==="egreso").reduce((a,m)=>a+Number(m.monto),0);
+      // por categoría
+      const porCatIng = {}, porCatEgr = {};
+      movs.forEach(m=>{
+        if (m.tipo==="ingreso") porCatIng[m.categoria] = (porCatIng[m.categoria]||0)+Number(m.monto);
+        if (m.tipo==="egreso") porCatEgr[m.categoria] = (porCatEgr[m.categoria]||0)+Number(m.monto);
+      });
+      // canje / utilidad del mes (de abonos de trámite)
+      let canje=0, utilidad=0;
+      movs.filter(m=>m.tramiteId && m.tipo==="ingreso").forEach(m=>{
+        const cot=(tramitesDb.cotizaciones||[]).find(c=>c.id===m.tramiteId); if(!cot) return;
+        const {ganancia,canje:cj}=clasificarCotizacion(cot); const t=ganancia+cj; if(t<=0) return;
+        utilidad += m.monto*(ganancia/t); canje += m.monto*(cj/t);
+      });
+      // por día (para la gráfica)
+      const porDia = {};
+      movs.forEach(m=>{ const d=m.fecha; if(!porDia[d]) porDia[d]={ing:0,egr:0}; if(m.tipo==="ingreso")porDia[d].ing+=Number(m.monto); if(m.tipo==="egreso")porDia[d].egr+=Number(m.monto); });
+      return { movs, ing, egr, neto:ing-egr, porCatIng, porCatEgr, canje, utilidad, porDia };
+    }, [caja, mes, tramitesDb]);
+
+    const nombreMes = (()=>{ const [y,m]=mes.split("-"); const meses=["","Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"]; return meses[Number(m)]+" "+y; })();
+    const maxDia = Math.max(1, ...Object.values(datos.porDia).map(d=>Math.max(d.ing,d.egr)));
+
+    function generarInforme() {
+      const filasCatIng = Object.entries(datos.porCatIng).map(([k,v])=>`<tr><td>${k}</td><td class=r>${fmt(v)}</td></tr>`).join("") || '<tr><td colspan=2>Sin ingresos</td></tr>';
+      const filasCatEgr = Object.entries(datos.porCatEgr).map(([k,v])=>`<tr><td>${k}</td><td class=r>${fmt(v)}</td></tr>`).join("") || '<tr><td colspan=2>Sin egresos</td></tr>';
+      const filasMovs = datos.movs.slice().sort((a,b)=> (a.fecha<b.fecha?1:-1)).map(m=>{
+        const signo = m.tipo==="ingreso"?"+":m.tipo==="egreso"?"−":"↔";
+        const desc = m.tipo==="transferencia"? `${m.cuenta} → ${m.cuentaDest}` : m.categoria;
+        return `<tr><td>${m.fecha}</td><td>${m.tipo}</td><td>${desc}</td><td>${m.cuenta}</td><td>${m.nota||""}</td><td class=r>${signo}${fmt(m.monto)}</td></tr>`;
+      }).join("") || '<tr><td colspan=6>Sin movimientos</td></tr>';
+      const dias = Object.keys(datos.porDia).sort();
+      const barras = dias.map(d=>{
+        const v=datos.porDia[d]; const hi=Math.round(v.ing/maxDia*90), he=Math.round(v.egr/maxDia*90);
+        return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;min-width:26px"><div style="display:flex;align-items:flex-end;gap:2px;height:100px"><div title="Ingreso ${fmt(v.ing)}" style="width:9px;height:${hi}px;background:#1B7A3D;border-radius:2px 2px 0 0"></div><div title="Egreso ${fmt(v.egr)}" style="width:9px;height:${he}px;background:#B3372A;border-radius:2px 2px 0 0"></div></div><div style="font-size:9px;color:#5A6478">${d.slice(8)}</div></div>`;
+      }).join("");
+      const html = `<!DOCTYPE html><html lang=es><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Informe ${nombreMes} · MoviGestión Luz</title>
+  <style>
+  *{box-sizing:border-box}body{font-family:'Segoe UI',system-ui,Arial,sans-serif;color:#0A1E42;margin:0;padding:26px;font-size:13px}
+  .wrap{max-width:820px;margin:0 auto}
+  .head{display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #0A1E42;padding-bottom:14px;margin-bottom:18px}
+  .head img{height:44px}h1{font-size:20px;margin:0}h2{font-size:15px;margin:22px 0 8px;border-left:4px solid #1E6FEB;padding-left:8px}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0}
+  .kpi{border:1px solid #E8ECF3;border-radius:10px;padding:12px}.kpi .l{font-size:11px;color:#5A6478;text-transform:uppercase}.kpi .v{font-size:19px;font-weight:800;margin-top:3px}
+  table{width:100%;border-collapse:collapse;margin:6px 0 12px;font-size:12px}
+  th{background:#0A1E42;color:#fff;padding:7px 9px;text-align:left}td{padding:6px 9px;border-bottom:1px solid #E8ECF3}.r{text-align:right}
+  .bar{position:sticky;top:0;background:#0A1E42;margin:-26px -26px 20px;padding:12px 20px;display:flex;gap:10px;justify-content:flex-end}
+  .bar button{background:#1E6FEB;color:#fff;border:none;padding:10px 18px;border-radius:9px;font-weight:700;cursor:pointer}
+  @media print{.bar{display:none}body{padding:0}}
+  .chart{display:flex;gap:3px;align-items:flex-end;border:1px solid #E8ECF3;border-radius:10px;padding:14px 10px;overflow-x:auto}
+  .leg{display:flex;gap:16px;font-size:11px;margin:6px 0 0}.leg span{display:inline-flex;align-items:center;gap:5px}.dot{width:10px;height:10px;border-radius:2px;display:inline-block}
+  </style></head><body>
+  <div class=bar><button onclick="window.print()">Imprimir / Guardar PDF</button></div>
+  <div class=wrap>
+  <div class=head><img src="${LOGO}"><div style="text-align:right"><h1>Informe financiero</h1><div style="color:#5A6478">${nombreMes} · MoviGestión Luz</div></div></div>
+  <div class=kpis>
+  <div class=kpi><div class=l>Ingresos</div><div class=v style="color:#1B7A3D">${fmt(datos.ing)}</div></div>
+  <div class=kpi><div class=l>Egresos</div><div class=v style="color:#B3372A">${fmt(datos.egr)}</div></div>
+  <div class=kpi><div class=l>Neto</div><div class=v>${fmt(datos.neto)}</div></div>
+  <div class=kpi><div class=l>Utilidad trámites</div><div class=v style="color:#C9A24B">${fmt(datos.utilidad)}</div></div>
+  </div>
+  <div class=kpis style="grid-template-columns:repeat(2,1fr)">
+  <div class=kpi><div class=l>Dinero en canje (pasa a tránsito)</div><div class=v style="color:#6B2FB3">${fmt(datos.canje)}</div></div>
+  <div class=kpi><div class=l>Movimientos registrados</div><div class=v>${datos.movs.length}</div></div>
+  </div>
+  <h2>Ingresos y egresos por día</h2>
+  <div class=chart>${barras || '<div style="color:#9AA3B2">Sin datos</div>'}</div>
+  <div class=leg><span><i class=dot style="background:#1B7A3D"></i>Ingresos</span><span><i class=dot style="background:#B3372A"></i>Egresos</span></div>
+  <h2>Ingresos por categoría</h2><table><thead><tr><th>Categoría</th><th class=r>Total</th></tr></thead><tbody>${filasCatIng}</tbody></table>
+  <h2>Egresos por categoría</h2><table><thead><tr><th>Categoría</th><th class=r>Total</th></tr></thead><tbody>${filasCatEgr}</tbody></table>
+  <h2>Detalle de movimientos (${datos.movs.length})</h2><table><thead><tr><th>Fecha</th><th>Tipo</th><th>Concepto</th><th>Cuenta</th><th>Nota</th><th class=r>Monto</th></tr></thead><tbody>${filasMovs}</tbody></table>
+  <div style="margin-top:20px;font-size:11px;color:#5A6478;border-top:1px solid #E8ECF3;padding-top:10px">Generado el ${ahora()} · MoviGestión Luz — Caja de la empresa</div>
+  </div></body></html>`;
+      try {
+        const w = window.open("", "_blank");
+        if (w && w.document) { w.document.open(); w.document.write(html); w.document.close(); return; }
+      } catch(e){}
+      try {
+        const blob = new Blob([html], {type:"text/html"}); const url=URL.createObjectURL(blob);
+        const a=document.createElement("a"); a.href=url; a.download=`Informe_${mes}_MoviGestion.html`; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        notificar("Informe descargado");
+      } catch(e){ notificar("No se pudo generar el informe"); }
+    }
+
+    return (
+      <Shell vista={vista} setVista={setVista} onSalir={salir} toast={toast}>
+        <h2 style={{...S.h2, fontSize:26, marginBottom:6}}>Informe mensual</h2>
+        <p style={{fontSize:14, color:"#5A6478", marginTop:0, marginBottom:16}}>Resumen del mes con totales, categorías, gráfica y detalle. Genera un informe imprimible o en PDF.</p>
+
+        <Sec titulo="Mes del informe" extra={<input type="month" style={{...S.input, width:"auto", padding:"8px 12px"}} value={mes} onChange={(e)=>setMes(e.target.value)} />}>
+          <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(150px,1fr))", gap:12, marginBottom:6}}>
+            <div><div style={S.label}>Ingresos</div><div style={{fontSize:21, fontWeight:900, color:GREEN}}>{fmt(datos.ing)}</div></div>
+            <div><div style={S.label}>Egresos</div><div style={{fontSize:21, fontWeight:900, color:RED}}>{fmt(datos.egr)}</div></div>
+            <div><div style={S.label}>Neto</div><div style={{fontSize:21, fontWeight:900, color: datos.neto<0?RED:NAVY}}>{fmt(datos.neto)}</div></div>
+            <div><div style={S.label}>Utilidad trámites</div><div style={{fontSize:21, fontWeight:900, color:GOLD}}>{fmt(datos.utilidad)}</div></div>
+            <div><div style={S.label}>Canje</div><div style={{fontSize:21, fontWeight:900, color:PURPLE}}>{fmt(datos.canje)}</div></div>
+          </div>
+        </Sec>
+
+        <Sec titulo={"Movimientos del mes (" + datos.movs.length + ")"}>
+          {datos.movs.length===0 && <div style={{color:"#9AA3B2", fontSize:14}}>Sin movimientos en {nombreMes}.</div>}
+          {datos.movs.slice().sort((a,b)=>(a.fecha<b.fecha?1:-1)).slice(0,40).map((m)=>{
+            const color=m.tipo==="ingreso"?GREEN:m.tipo==="egreso"?RED:BLUE; const signo=m.tipo==="ingreso"?"+":m.tipo==="egreso"?"−":"↔";
+            return (
+              <div key={m.id} style={{display:"flex", justifyContent:"space-between", alignItems:"center", padding:"9px 0", borderBottom:"1px solid #EEF1F7", gap:10}}>
+                <div style={{minWidth:0}}>
+                  <div style={{fontWeight:700, color:NAVY, fontSize:14}}>{m.tipo==="transferencia"?`${m.cuenta} → ${m.cuentaDest}`:m.categoria}</div>
+                  <div style={{fontSize:12, color:"#5A6478"}}>{m.fecha} · {m.cuenta}{m.nota?" · "+m.nota:""}</div>
+                </div>
+                <div style={{fontWeight:900, color, fontSize:14.5, flexShrink:0}}>{signo}{fmt(m.monto)}</div>
+              </div>
+            );
+          })}
+          {datos.movs.length>40 && <div style={{fontSize:12.5, color:"#5A6478", marginTop:8}}>… y {datos.movs.length-40} más. El informe completo los incluye todos.</div>}
+        </Sec>
+
+        <button style={{...S.btnP, width:"100%", fontSize:16.5, padding:"15px"}} onClick={generarInforme}>Generar informe mensual ({nombreMes})</button>
+      </Shell>
+    );
+  }
+  function ArqueoView({ caja, cuentas, saldos, guardar, notificar, Shell, vista, setVista, salir, toast }) {
+    const [conteo, setConteo] = useState(()=> { const o={}; cuentas.forEach(c=>o[c]=""); return o; });
+    const [nota, setNota] = useState("");
+    const [ajustar, setAjustar] = useState(true);
+    const [buscar, setBuscar] = useState("");
+
+    const cuentasContadas = cuentas.filter(c=> conteo[c] !== "" && conteo[c] != null);
+    const totalContado = cuentas.reduce((a,c)=> a + Number(soloNum(conteo[c])||0), 0);
+    const totalSistema = cuentas.reduce((a,c)=> a + Number(saldos[c]||0), 0);
+    const diferencia = totalContado - totalSistema;
+
+    function guardarArqueo() {
+      if (cuentasContadas.length === 0) { notificar("Escribe al menos una cuenta contada"); return; }
+      const detalle = cuentas.map(c=>({ cuenta:c, sistema: Number(saldos[c]||0), contado: Number(soloNum(conteo[c])||0), medido: conteo[c]!=="" }));
+      const arqueo = { id: uid(), fecha: hoy(), creado: ahora(), detalle, totalContado, totalSistema, diferencia, nota: nota.trim(), ajustado: ajustar };
+      let nuevosMovs = [];
+      if (ajustar) {
+        // crea un movimiento de ajuste por cada cuenta contada con diferencia
+        cuentasContadas.forEach((c)=>{
+          const dif = Number(soloNum(conteo[c])||0) - Number(saldos[c]||0);
+          if (dif !== 0) {
+            nuevosMovs.push({ id: uid(), tipo: dif>0?"ingreso":"egreso", cuenta: c, cuentaDest:null, monto: Math.abs(dif),
+              categoria: dif>0 ? "Otro ingreso" : "Otro egreso", nota: `Ajuste de arqueo (${dif>0?"sobrante":"faltante"})`, fecha: hoy(), creado: ahora(), ajuste:true });
+          }
+        });
+      }
+      guardar({ ...caja, arqueos: [arqueo, ...(caja.arqueos||[])], movimientos: [...nuevosMovs, ...caja.movimientos] });
+      notificar(ajustar && nuevosMovs.length ? "Arqueo guardado y saldos ajustados" : "Arqueo guardado");
+      const o={}; cuentas.forEach(c=>o[c]=""); setConteo(o); setNota("");
+    }
+
+    const arqueosFiltrados = (caja.arqueos||[]).filter(a=> !buscar || (a.fecha||"").includes(buscar) || (a.nota||"").toLowerCase().includes(buscar.toLowerCase()));
+
+    return (
+      <Shell vista={vista} setVista={setVista} onSalir={salir} toast={toast}>
+        <h2 style={{...S.h2, fontSize:26, marginBottom:6}}>Arqueo de caja</h2>
+        <p style={{fontSize:14, color:"#5A6478", marginTop:0, marginBottom:16}}>Cuenta el dinero real en cada cuenta y compáralo con el sistema. Si activas el ajuste, la app iguala los saldos automáticamente registrando el sobrante o faltante.</p>
+
+        <Sec titulo="Conteo por cuenta">
+          {cuentas.map((c)=>{
+            const contado = Number(soloNum(conteo[c])||0);
+            const dif = contado - Number(saldos[c]||0);
+            return (
+              <div key={c} style={{display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:12, alignItems:"center", padding:"10px 0", borderBottom:"1px solid #EEF1F7"}}>
+                <div style={{fontWeight:700, color:NAVY}}>{c}<div style={{fontSize:12, color:"#5A6478", fontWeight:400}}>Sistema: {fmt(saldos[c]||0)}</div></div>
+                <input inputMode="numeric" style={{...S.input, textAlign:"right", fontWeight:700}} placeholder="Contado" value={miles(conteo[c])} onChange={(e)=>setConteo({...conteo, [c]: soloNum(e.target.value)})} />
+                <div style={{textAlign:"right", fontWeight:800, fontSize:13.5, color: dif===0?GREEN: dif>0?BLUE:RED}}>{conteo[c]!==""? (dif===0?"Cuadra": (dif>0?"Sobra ":"Falta ")+fmt(Math.abs(dif))):"—"}</div>
+              </div>
+            );
+          })}
+          <div style={{background:"#F4F6FA", borderRadius:12, padding:"14px 16px", marginTop:14, display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))", gap:10}}>
+            <div><div style={S.label}>Contado</div><b style={{fontSize:17}}>{fmt(totalContado)}</b></div>
+            <div><div style={S.label}>Sistema</div><b style={{fontSize:17}}>{fmt(totalSistema)}</b></div>
+            <div><div style={S.label}>Diferencia</div><b style={{fontSize:17, color: diferencia===0?GREEN: diferencia>0?BLUE:RED}}>{diferencia===0?"Cuadrada":(diferencia>0?"Sobra ":"Falta ")+fmt(Math.abs(diferencia))}</b></div>
+          </div>
+          <label style={{display:"flex", alignItems:"center", gap:8, fontSize:14, fontWeight:600, color:NAVY, margin:"14px 0 6px", cursor:"pointer"}}>
+            <input type="checkbox" checked={ajustar} onChange={(e)=>setAjustar(e.target.checked)} />
+            Ajustar saldos automáticamente para que cuadre (recomendado al inicio)
+          </label>
+          <div style={{fontSize:12.5, color:"#5A6478", marginBottom:10}}>Al activarlo, la app crea un movimiento de "sobrante" o "faltante" en cada cuenta contada para dejar el saldo igual a lo que contaste. Ideal cuando ya había dinero en las cuentas.</div>
+          <Campo label="Nota del arqueo (opcional)"><input style={S.input} value={nota} onChange={(e)=>setNota(e.target.value)} placeholder="Ej: cierre del día, turno tarde…" /></Campo>
+          <button style={S.btnP} onClick={guardarArqueo}>Guardar arqueo{ajustar?" y cuadrar":""}</button>
+        </Sec>
+
+        <Sec titulo="Arqueos anteriores" extra={<input style={{...S.input, width:"auto", padding:"8px 12px", maxWidth:190}} value={buscar} onChange={(e)=>setBuscar(e.target.value)} placeholder="Buscar fecha o nota" />}>
+          {arqueosFiltrados.length === 0 && <div style={{color:"#9AA3B2", fontSize:14}}>{buscar ? "Sin resultados." : "Aún no hay arqueos guardados."}</div>}
+          {arqueosFiltrados.slice(0,60).map((a)=>(
+            <div key={a.id} style={{padding:"11px 0", borderBottom:"1px solid #EEF1F7"}}>
+              <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", gap:10, flexWrap:"wrap"}}>
+                <div><div style={{fontWeight:700, color:NAVY, fontSize:15}}>{a.fecha}</div><div style={{fontSize:12.5, color:"#5A6478"}}>{a.creado}{a.nota?" · "+a.nota:""}{a.ajustado?" · ajustado":""}</div></div>
+                <div style={{textAlign:"right"}}>
+                  <div style={{fontWeight:800}}>{fmt(a.totalContado)}</div>
+                  <div style={{fontSize:12.5, fontWeight:700, color: a.diferencia===0?GREEN:a.diferencia>0?BLUE:RED}}>{a.diferencia===0?"Cuadró":(a.diferencia>0?"Sobró ":"Faltó ")+fmt(Math.abs(a.diferencia))}</div>
+                </div>
+              </div>
+              <details style={{marginTop:6}}>
+                <summary style={{fontSize:12.5, color:BLUE, fontWeight:700, cursor:"pointer"}}>Ver detalle por cuenta</summary>
+                <div style={{marginTop:6}}>
+                  {(a.detalle||[]).map((d)=>(
+                    <div key={d.cuenta} style={{display:"flex", justifyContent:"space-between", fontSize:12.5, padding:"3px 0", color:"#5A6478"}}>
+                      <span>{d.cuenta}</span><span>Sistema {fmt(d.sistema)} · Contado {fmt(d.contado)}</span>
+                    </div>
+                  ))}
+                </div>
+              </details>
+            </div>
+          ))}
+        </Sec>
+      </Shell>
+    );
+  }
+  return <CajaRoot />;
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+
+</script>
+</body>
+</html>
