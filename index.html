@@ -381,6 +381,7 @@ function Shell({ children, vista, setVista, onNueva, onSalir, toast }) {
           <NavBtn v="cotizaciones" label="Cotizaciones" onClick={()=>setVista("cotizaciones")} />
           <NavBtn v="lista" label="Trámites" onClick={()=>setVista("lista")} />
           <NavBtn v="archivados" label="Finalizados" onClick={()=>setVista("archivados")} />
+          <NavBtn v="placas" label="Placas" onClick={()=>setVista("placas")} />
           <NavBtn v="form" label="+ Nuevo" onClick={onNueva} />
           <NavBtn v="ajustes" label="Respaldo" onClick={()=>setVista("ajustes")} />
           <button onClick={onSalir} style={{background:"transparent", border:"1.5px solid rgba(255,255,255,.25)", color:"#C7D6F0", padding:"9px 16px", borderRadius:24, fontSize:14, fontWeight:700, cursor:"pointer", marginLeft:4}}>Salir</button>
@@ -611,7 +612,7 @@ async function copiarImagenCotizacion(c, notificar) {
 }
 
 function App() {
-  const [db, setDb] = useState({ cotizaciones: [], counter: 0, counterCot: 0 });
+  const [db, setDb] = useState({ cotizaciones: [], counter: 0, counterCot: 0, placas: [] });
   const [cajaData, setCajaData] = useState(null); // resumen de caja (solo lectura, para el mini-panel del dashboard)
   const [cargando, setCargando] = useState(true);
   const [vista, setVista] = useState("login");
@@ -1397,6 +1398,35 @@ function App() {
             ))}
           </div>
         </div>
+        {(()=>{
+          const placas = db.placas || [];
+          const hoyStr = hoy();
+          const notis = placas.map((p)=>{
+            if (!p.fecha) return null;
+            const f = new Date(p.fecha + "T00:00:00"); if (isNaN(f)) return null;
+            const v = new Date(f); v.setMonth(v.getMonth()+1);
+            const d = Math.round((v - new Date(hoyStr + "T00:00:00"))/86400000);
+            if (d > 1) return null;
+            return { ...p, dias: d, vence: v.toISOString().slice(0,10) };
+          }).filter(Boolean);
+          if (!notis.length) return null;
+          return (
+            <div style={{...S.card, marginBottom:16, borderLeft:"4px solid "+GOLD, background:"#FFFDF5"}}>
+              <div style={{fontWeight:800, color:NAVY, marginBottom:10, display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:8}}>
+                <div style={{display:"flex", alignItems:"center", gap:8}}><span style={{fontSize:20}}>🔔</span> Placas por vencer ({notis.length})</div>
+                <button style={{...S.btnS, padding:"7px 14px"}} onClick={()=>setVista("placas")}>Ver todas</button>
+              </div>
+              {notis.map((n)=>(
+                <div key={n.id} style={{display:"flex", justifyContent:"space-between", alignItems:"center", padding:"7px 0", borderBottom:"1px solid #F0E8C8", gap:10, flexWrap:"wrap"}}>
+                  <div style={{fontWeight:700, color:NAVY, fontSize:14}}>{n.placa} · {n.tramite || "Sin tipo"}</div>
+                  <span style={{...tag(n.dias<0?"#FBE4E1":n.dias===0?"#FBE4E1":"#FFF0E0", n.dias<0?"#B3372A":n.dias===0?"#B3372A":"#9A5B00"), fontSize:12}}>
+                    {n.dias<0 ? `Venció hace ${Math.abs(n.dias)}d` : n.dias===0 ? "¡HOY!" : "¡MAÑANA!"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
         {hayContingencia && <div style={{...S.card, marginBottom:16, borderLeft:"4px solid #B3372A", background:"#FDF3F1", display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:10}}>
           <div style={{fontSize:14.5, color:NAVY}}><b>⚠ No se pudo guardar por conexión.</b> Hay cambios de un trámite o cotización que quedaron de respaldo en este dispositivo y todavía no llegaron a la nube.</div>
           <button style={S.btnP} onClick={reintentarContingencia}>Recuperar y reintentar</button>
@@ -2094,6 +2124,125 @@ function App() {
     );
   }
 
+  /* ================= PLACAS (registro de trámites futuros a 30 días) ================= */
+  if (vista === "placas") {
+    const placas = db.placas || [];
+    const hoyStr = hoy();
+    /* calcular notificaciones: un día antes y el mismo día de los 30 días cumplidos */
+    const notificaciones = placas.map((p) => {
+      if (!p.fecha) return null;
+      const fechaObj = new Date(p.fecha + "T00:00:00");
+      if (isNaN(fechaObj)) return null;
+      const vence = new Date(fechaObj); vence.setMonth(vence.getMonth() + 1);
+      const diasFaltan = Math.round((vence - new Date(hoyStr + "T00:00:00")) / 86400000);
+      if (diasFaltan > 1) return null;
+      let tipo, mensaje;
+      if (diasFaltan < 0) { tipo = "vencido"; mensaje = `Venció hace ${Math.abs(diasFaltan)} día${Math.abs(diasFaltan)===1?"":"s"}`; }
+      else if (diasFaltan === 0) { tipo = "hoy"; mensaje = "¡El mes se cumple HOY!"; }
+      else { tipo = "manana"; mensaje = "El mes se cumple MAÑANA"; }
+      return { ...p, tipo, mensaje, vence: vence.toISOString().slice(0,10) };
+    }).filter(Boolean);
+
+    const agregarPlaca = () => {
+      const nueva = { id: uid(), placa: "", tramite: "", fecha: hoyStr };
+      guardarDb({ ...db, placas: [...placas, nueva] });
+    };
+    const editarPlaca = (id, campo, valor) => {
+      guardarDb({ ...db, placas: placas.map(p => p.id === id ? { ...p, [campo]: campo === "placa" ? valor.toUpperCase() : valor } : p) });
+    };
+    const eliminarPlaca = (id) => {
+      if (!window.confirm("¿Eliminar este registro?")) return;
+      guardarDb({ ...db, placas: placas.filter(p => p.id !== id) });
+    };
+
+    return (
+      <Shell vista={vista} setVista={setVista} onNueva={irNueva} onSalir={salir} toast={toast}>
+        {notificaciones.length > 0 && <div style={{...S.card, marginBottom:16, borderLeft:"4px solid #B3372A", background:"#FDF3F1"}}>
+          <div style={{fontWeight:800, color:NAVY, marginBottom:8, display:"flex", alignItems:"center", gap:8}}>
+            <span style={{fontSize:20}}>🔔</span> Notificaciones ({notificaciones.length})
+          </div>
+          {notificaciones.map((n)=>(
+            <div key={n.id} style={{display:"flex", justifyContent:"space-between", alignItems:"center", padding:"8px 0", borderBottom:"1px solid #F0C4BE", gap:10, flexWrap:"wrap"}}>
+              <div>
+                <div style={{fontWeight:700, color:NAVY, fontSize:14}}>{n.placa} · {n.tramite || "Sin tipo"}</div>
+                <div style={{fontSize:12.5, color: n.tipo==="vencido"?"#B3372A": n.tipo==="hoy"?"#B3372A":"#9A6B00", fontWeight:700}}>
+                  {n.tipo==="hoy" ? "🔴" : n.tipo==="manana" ? "🟡" : "⚫"} {n.mensaje} (vence {n.vence})
+                </div>
+              </div>
+              <div style={{fontSize:12, color:"#5A6478"}}>Registrado: {n.fecha}</div>
+            </div>
+          ))}
+        </div>}
+
+        <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16, flexWrap:"wrap", gap:10}}>
+          <div>
+            <h2 style={{...S.h2, fontSize:24}}>Placas</h2>
+            <p style={{fontSize:13.5, color:"#6B7690", marginTop:4, marginBottom:0}}>Registro de trámites que se pueden hacer dentro de un mes. Al cumplirse los 30 días te avisa un día antes y el mismo día.</p>
+          </div>
+          <button style={S.btnP} onClick={agregarPlaca}>+ Agregar placa</button>
+        </div>
+
+        <div style={{...S.card, padding:0, overflow:"hidden"}}>
+          <table style={{width:"100%", borderCollapse:"collapse", fontSize:14}}>
+            <thead>
+              <tr style={{background:`linear-gradient(135deg, ${NAVY}, #163a6e)`, color:"#fff"}}>
+                <th style={{padding:"12px 14px", textAlign:"left", fontWeight:700, fontSize:12.5, textTransform:"uppercase", letterSpacing:".05em"}}>Placa</th>
+                <th style={{padding:"12px 14px", textAlign:"left", fontWeight:700, fontSize:12.5, textTransform:"uppercase", letterSpacing:".05em"}}>Trámite</th>
+                <th style={{padding:"12px 14px", textAlign:"left", fontWeight:700, fontSize:12.5, textTransform:"uppercase", letterSpacing:".05em"}}>Fecha registro</th>
+                <th style={{padding:"12px 14px", textAlign:"left", fontWeight:700, fontSize:12.5, textTransform:"uppercase", letterSpacing:".05em"}}>Vence en</th>
+                <th style={{padding:"12px 8px", width:50}}></th>
+              </tr>
+            </thead>
+            <tbody>
+              {placas.length === 0 && <tr><td colSpan={5} style={{padding:"28px 14px", textAlign:"center", color:"#9AA3B2"}}>Aún no hay placas registradas. Agrega una con el botón de arriba.</td></tr>}
+              {placas.map((p, i) => {
+                const fechaObj = p.fecha ? new Date(p.fecha + "T00:00:00") : null;
+                const vence = fechaObj ? new Date(fechaObj) : null;
+                if (vence) vence.setMonth(vence.getMonth() + 1);
+                const diasFaltan = vence ? Math.round((vence - new Date(hoyStr + "T00:00:00")) / 86400000) : null;
+                const esUrgente = diasFaltan !== null && diasFaltan <= 1;
+                const yaVencio = diasFaltan !== null && diasFaltan < 0;
+                return (
+                  <tr key={p.id} style={{borderBottom:"1px solid #EDF0F6", background: esUrgente ? "#FDF3F1" : i%2===0 ? "#fff" : "#FAFBFC"}}>
+                    <td style={{padding:"10px 14px"}}>
+                      <input style={{...S.input, padding:"8px 10px", fontWeight:700, letterSpacing:".08em", textTransform:"uppercase", border: esUrgente?"1.5px solid #D9483A":"1.5px solid #E1E6F0"}}
+                        value={p.placa} onChange={(e)=>editarPlaca(p.id, "placa", e.target.value)} placeholder="ABC123" />
+                    </td>
+                    <td style={{padding:"10px 14px"}}>
+                      <input style={{...S.input, padding:"8px 10px"}}
+                        value={p.tramite} onChange={(e)=>editarPlaca(p.id, "tramite", e.target.value)} placeholder="Traspaso, matrícula…" />
+                    </td>
+                    <td style={{padding:"10px 14px"}}>
+                      <input type="date" style={{...S.input, padding:"8px 10px"}}
+                        value={p.fecha} onChange={(e)=>editarPlaca(p.id, "fecha", e.target.value)} />
+                    </td>
+                    <td style={{padding:"10px 14px"}}>
+                      {diasFaltan !== null ? (
+                        <span style={{...tag(
+                          yaVencio ? "#FBE4E1" : diasFaltan<=1 ? "#FFF0E0" : diasFaltan<=7 ? "#FBF3DE" : "#EAF6EE",
+                          yaVencio ? "#B3372A" : diasFaltan<=1 ? "#9A5B00" : diasFaltan<=7 ? "#8A6D1B" : "#1B7A3D"
+                        ), fontSize:12.5}}>
+                          {yaVencio ? `Venció hace ${Math.abs(diasFaltan)}d` : diasFaltan===0 ? "¡HOY!" : diasFaltan===1 ? "¡MAÑANA!" : `${diasFaltan} días`}
+                        </span>
+                      ) : <span style={{color:"#9AA3B2", fontSize:13}}>—</span>}
+                    </td>
+                    <td style={{padding:"10px 8px", textAlign:"center"}}>
+                      <button onClick={()=>eliminarPlaca(p.id)} style={{background:"none", border:"none", color:"#C0392B", fontWeight:800, fontSize:16, cursor:"pointer", padding:"4px 8px"}}>✕</button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {placas.length > 0 && <div style={{fontSize:12.5, color:"#6B7690", marginTop:12}}>
+          {placas.length} placa{placas.length===1?"":"s"} registrada{placas.length===1?"":"s"} · Las notificaciones aparecen un día antes y el mismo día en que se cumplen los 30 días.
+        </div>}
+      </Shell>
+    );
+  }
+
   return null;
 }
 
@@ -2230,6 +2379,8 @@ function CajaApp({ onSalirCaja, tabla, titulo, onVerTramite }) {
     const [caja, setCaja] = useState({ cuentas:{}, movimientos:[], arqueos:[], config:{ cuentas: CUENTAS_DEF } });
     const [tramitesDb, setTramitesDb] = useState({ cotizaciones: [] });
     const [cargando, setCargando] = useState(true);
+    const [sync, setSync] = useState(sb ? "cargando" : "local");
+    const [hayContingencia, setHayContingencia] = useState(false);
     const [vista, setVista] = useState("panel");
     const [pin, setPin] = useState("");
     const [errPin, setErrPin] = useState("");
@@ -2249,20 +2400,24 @@ function CajaApp({ onSalirCaja, tabla, titulo, onVerTramite }) {
     useEffect(() => { cargar(); }, []);
 
     async function cargar() {
-      // salvavidas: pase lo que pase, la app arranca en 6 segundos
-      const salvavidas = setTimeout(()=> setCargando(false), 6000);
+      try { if (localStorage.getItem(TABLA_CAJA + "-contingencia")) setHayContingencia(true); } catch (e) {}
+      setSync(sb ? "cargando" : "local");
+      // salvavidas: pase lo que pase, la app arranca en 8 segundos
+      const salvavidas = setTimeout(()=> setCargando(false), 8000);
       const conTimeout = (promesa, ms) => Promise.race([promesa, new Promise((res)=>setTimeout(()=>res({ data:null, error:"timeout" }), ms))]);
       if (sb) {
+        let huboError = false;
         // caja / finanzas
         try {
-          const r1 = await conTimeout(sb.from(TABLA_CAJA).select("data").eq("id",1).single(), 5000);
+          const r1 = await conTimeout(sb.from(TABLA_CAJA).select("data").eq("id",1).single(), 7000);
           if (r1 && r1.data && r1.data.data) setCaja(normalizarCaja(r1.data.data));
-        } catch (e) { /* tabla nueva o sin datos */ }
+          else if (r1 && r1.error) huboError = true;
+        } catch (e) { huboError = true; }
         // trámites (solo aplica para la caja de la empresa; en finanzas personales queda vacío y no molesta)
         try {
-          const r2 = await conTimeout(sb.from("app_state").select("data").eq("id",1).single(), 5000);
+          const r2 = await conTimeout(sb.from("app_state").select("data").eq("id",1).single(), 7000);
           if (r2 && r2.data && r2.data.data) setTramitesDb(r2.data.data);
-        } catch (e) { /* sin datos */ }
+        } catch (e) { /* sin datos, no es crítico para la caja */ }
         // realtime (si falla, no bloquea)
         try {
           sb.channel(TABLA_CAJA + "-rt")
@@ -2272,6 +2427,7 @@ function CajaApp({ onSalirCaja, tabla, titulo, onVerTramite }) {
               (p)=>{ if (p.new && p.new.data) setTramitesDb(p.new.data); })
             .subscribe();
         } catch (e) {}
+        setSync(huboError ? "error" : "nube");
       } else {
         try { const r = localStorage.getItem(TABLA_CAJA + "-v1"); if (r) setCaja(normalizarCaja(JSON.parse(r))); } catch(e) {}
         try { const r = localStorage.getItem("movigestion-luz-v1"); if (r) setTramitesDb(JSON.parse(r)); } catch(e) {}
@@ -2285,8 +2441,38 @@ function CajaApp({ onSalirCaja, tabla, titulo, onVerTramite }) {
     }
     async function guardar(nueva) {
       setCaja(nueva);
-      if (sb) { try { await sb.from(TABLA_CAJA).upsert({ id:1, data:nueva }); } catch(e){ notificar("Error al sincronizar"); } }
-      else { try { localStorage.setItem(TABLA_CAJA + "-v1", JSON.stringify(nueva)); } catch(e){} }
+      if (sb) {
+        try {
+          await sb.from(TABLA_CAJA).upsert({ id:1, data:nueva });
+          setSync("nube");
+        } catch(e) {
+          try { localStorage.setItem(TABLA_CAJA + "-contingencia", JSON.stringify({ data: nueva, fecha: ahora() })); } catch(e2) {}
+          setSync("error");
+          setHayContingencia(true);
+          notificar("⚠ No se pudo guardar por conexión. Se guardó de respaldo en este dispositivo.");
+        }
+      }
+      else {
+        try { localStorage.setItem(TABLA_CAJA + "-v1", JSON.stringify(nueva)); } catch(e){}
+        notificar("⚠ Guardado SOLO en este dispositivo (sin conexión a la nube).");
+      }
+    }
+    async function reintentarCaja() {
+      let raw;
+      try { raw = localStorage.getItem(TABLA_CAJA + "-contingencia"); } catch(e) {}
+      if (sb && raw) {
+        try {
+          const guardado = JSON.parse(raw);
+          await sb.from(TABLA_CAJA).upsert({ id:1, data: guardado.data });
+          setCaja(guardado.data);
+          try { localStorage.removeItem(TABLA_CAJA + "-contingencia"); } catch(e) {}
+          setSync("nube");
+          setHayContingencia(false);
+          notificar("✅ Cambios recuperados y guardados en la nube.");
+          return;
+        } catch (e) { notificar("Sigue sin poder conectar. Intenta de nuevo en un momento."); return; }
+      }
+      cargar();
     }
 
     const cuentas = (caja.config && caja.config.cuentas) || CUENTAS_DEF;
@@ -2449,6 +2635,20 @@ function CajaApp({ onSalirCaja, tabla, titulo, onVerTramite }) {
               <div><div style={{color:"#C9A24B", fontSize:11, fontWeight:700, textTransform:"uppercase"}}>En canje</div><div style={{color:"#fff", fontSize:17, fontWeight:800, marginTop:2}}>{fmt(dineroEnProceso)}</div></div>
             </div>
           </div>
+
+          {hayContingencia && <div style={{...S.card, marginBottom:16, borderLeft:"4px solid #B3372A", background:"#FDF3F1", display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:10}}>
+            <div style={{fontSize:14.5, color:NAVY}}><b>⚠ No se pudo guardar por conexión.</b> Hay un movimiento o arqueo que quedó de respaldo en este dispositivo y todavía no llegó a la nube.</div>
+            <button style={S.btnP} onClick={reintentarCaja}>Recuperar y reintentar</button>
+          </div>}
+          {!hayContingencia && sync === "local" && <div style={{...S.card, marginBottom:16, borderLeft:"4px solid #B3372A", background:"#FDF3F1", display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:10}}>
+            <div style={{fontSize:14.5, color:NAVY}}><b>⚠ No estás conectado a la nube.</b> Lo que veas y guardes ahora puede no reflejar la información real ni sincronizarse con otros equipos.</div>
+            <button style={S.btnP} onClick={()=>window.location.reload()}>Recargar página</button>
+          </div>}
+          {!hayContingencia && sync === "error" && <div style={{...S.card, marginBottom:16, borderLeft:"4px solid #B3372A", background:"#FDF3F1", display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:10}}>
+            <div style={{fontSize:14.5, color:NAVY}}><b>No se pudo cargar la información de la nube.</b> Por eso los valores pueden verse en cero o incompletos. Puede ser tu conexión a internet.</div>
+            <button style={S.btnP} onClick={cargar}>Reintentar</button>
+          </div>}
+
           <h2 style={{...S.h2, fontSize:20, marginBottom:16}}>Detalle</h2>
 
           <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(200px,1fr))", gap:14, marginBottom:18}}>
@@ -2991,6 +3191,7 @@ function CajaApp({ onSalirCaja, tabla, titulo, onVerTramite }) {
 }
 
 ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+
 
 
 </script>
