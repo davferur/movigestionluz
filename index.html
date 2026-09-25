@@ -399,10 +399,10 @@ function Shell({ children, vista, setVista, onNueva, onSalir, toast, placas }) {
       <div style={{background:`linear-gradient(120deg, ${NAVY} 0%, #123262 60%, #0F2A54 100%)`, padding:"12px 16px", display:"flex", justifyContent:"space-between", alignItems:"center", position:"sticky", top:0, zIndex:20, boxShadow:"0 4px 20px rgba(10,30,66,.22)"}}>
         <div style={{display:"flex", alignItems:"center", gap:12}}>
           {/* Hamburguesa */}
-          <button onClick={()=>setMenuAbierto(!menuAbierto)} style={{background:"rgba(255,255,255,.1)", border:"none", borderRadius:12, width:40, height:40, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:5, cursor:"pointer", padding:0}}>
-            <span style={{width:20, height:2.5, background:"#fff", borderRadius:2, display:"block", transition:"all .2s", transform: menuAbierto?"rotate(45deg) translateY(3.7px)":"none"}} />
+          <button onClick={()=>setMenuAbierto(!menuAbierto)} style={{background:"rgba(255,255,255,.1)", border:"none", borderRadius:12, width:40, height:40, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:4, cursor:"pointer", padding:0}}>
+            <span style={{width:20, height:2.5, background:"#fff", borderRadius:2, display:"block", transition:"all .2s", transform: menuAbierto?"rotate(45deg) translateY(6.5px)":"none"}} />
             <span style={{width:20, height:2.5, background:"#fff", borderRadius:2, display:"block", transition:"all .2s", opacity: menuAbierto?0:1}} />
-            <span style={{width:20, height:2.5, background:"#fff", borderRadius:2, display:"block", transition:"all .2s", transform: menuAbierto?"rotate(-45deg) translateY(-3.7px)":"none"}} />
+            <span style={{width:20, height:2.5, background:"#fff", borderRadius:2, display:"block", transition:"all .2s", transform: menuAbierto?"rotate(-45deg) translateY(-6.5px)":"none"}} />
           </button>
           <Logo dark alto={30} />
         </div>
@@ -413,6 +413,7 @@ function Shell({ children, vista, setVista, onNueva, onSalir, toast, placas }) {
               🔔
               {notis.length > 0 && <span style={{position:"absolute", top:-2, right:-2, background:"#E24B4A", color:"#fff", fontSize:10, fontWeight:800, minWidth:18, height:18, borderRadius:9, display:"flex", alignItems:"center", justifyContent:"center", padding:"0 4px", border:"2px solid "+NAVY}}>{notis.length}</span>}
             </button>
+            {notiAbierto && <div onClick={()=>setNotiAbierto(false)} style={{position:"fixed", inset:0, zIndex:99}} />}
             {notiAbierto && <div style={{position:"absolute", top:48, right:0, width:"min(320px, 85vw)", maxHeight:380, overflowY:"auto", background:"#fff", borderRadius:16, boxShadow:"0 12px 40px rgba(10,30,66,.3)", zIndex:100, border:"1px solid #E8ECF3"}}>
               <div style={{padding:"14px 16px", borderBottom:"1px solid #EDF0F6", display:"flex", justifyContent:"space-between", alignItems:"center"}}>
                 <div style={{fontWeight:800, color:NAVY, fontSize:15}}>Notificaciones</div>
@@ -722,6 +723,7 @@ function App() {
   const [ppTramite, setPpTramite] = useState("");
   const [ppFecha, setPpFecha] = useState("");
   const [ppError, setPpError] = useState("");
+  const [buscaPlaca, setBuscaPlaca] = useState("");
 
   const [sync, setSync] = useState(sb ? "nube" : "local");
 
@@ -2249,8 +2251,11 @@ function App() {
               value={ppPlaca} onChange={(e)=>{setPpPlaca(e.target.value.toUpperCase()); setPpError("");}} placeholder="ABC123" autoFocus />
           </Campo>
           <Campo label="Tipo de trámite">
-            <input style={{...S.input, padding:"12px 14px"}}
-              value={ppTramite} onChange={(e)=>setPpTramite(e.target.value)} placeholder="Traspaso, matrícula, cambio de color…" />
+            <select style={{...S.input, padding:"12px 14px"}} value={ppTramite} onChange={(e)=>setPpTramite(e.target.value)}>
+              <option value="">Selecciona el trámite</option>
+              <option value="Duplicado de placa">Duplicado de placa</option>
+              <option value="Radicación de cuenta">Radicación de cuenta</option>
+            </select>
           </Campo>
           <Campo label="Fecha de registro">
             <input type="date" style={{...S.input, padding:"12px 14px"}} value={ppFecha} onChange={(e)=>{setPpFecha(e.target.value); setPpError("");}} />
@@ -2264,72 +2269,99 @@ function App() {
       </div>
     );
 
+    /* enriquecer cada placa con datos de vencimiento */
+    const enriquecidas = placas.map((p) => {
+      const fechaObj = p.fecha ? new Date(p.fecha + "T00:00:00") : null;
+      const vence = fechaObj ? new Date(fechaObj) : null;
+      if (vence) vence.setMonth(vence.getMonth() + 1);
+      const diasFaltan = vence ? Math.round((vence - new Date(hoyStr + "T00:00:00")) / 86400000) : 9999;
+      return { ...p, diasFaltan, venceStr: vence ? vence.toISOString().slice(0,10) : "" };
+    });
+    const urgentes = enriquecidas.filter(p => p.diasFaltan <= 7).sort((a,b) => a.diasFaltan - b.diasFaltan);
+    const todas = enriquecidas.sort((a,b) => a.diasFaltan - b.diasFaltan);
+
+    /* buscador */
+    const filtro = buscaPlaca.trim().toUpperCase();
+    const filtradas = filtro ? todas.filter(p =>
+      p.placa.toUpperCase().includes(filtro) ||
+      (p.tramite||"").toUpperCase().includes(filtro) ||
+      (p.fecha||"").includes(filtro) ||
+      (p.venceStr||"").includes(filtro) ||
+      String(p.diasFaltan).includes(filtro)
+    ) : todas;
+
+    const TarjetaPlaca = ({ p }) => {
+      const d = p.diasFaltan;
+      const yaVencio = d < 0;
+      const esHoy = d === 0;
+      const esManana = d === 1;
+      const esUrgente = d <= 1;
+      const bgCard = esHoy || yaVencio ? "#FBE4E1" : esManana ? "#FFF5E6" : d<=7 ? "#FFFDF5" : "#fff";
+      const borderColor = esHoy || yaVencio ? "#D9483A" : esManana ? "#E89B2D" : d<=7 ? GOLD : BLUE;
+      return (
+        <div onClick={()=>abrirPopEditar(p)} style={{...S.card, padding:"16px 20px", cursor:"pointer", borderLeft:"4px solid "+borderColor, background:bgCard, transition:"transform .1s"}}>
+          <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:10}}>
+            <div style={{display:"flex", alignItems:"center", gap:12}}>
+              <div style={{width:44, height:44, borderRadius:14, background: esUrgente ? `linear-gradient(135deg,${esHoy||yaVencio?"#E85D4A,#D9483A":"#E89B2D,#D4820E"})` : `linear-gradient(135deg, ${NAVY}, #1E4A8F)`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0, color:"#fff"}}>🚗</div>
+              <div>
+                <div style={{fontWeight:800, color:NAVY, fontSize:17, letterSpacing:".08em"}}>{p.placa || "—"}</div>
+                <div style={{fontSize:13.5, color:"#5A6478", marginTop:2}}>{p.tramite || "Sin trámite"}</div>
+              </div>
+            </div>
+            <div style={{display:"flex", gap:6, flexShrink:0}} onClick={(e)=>e.stopPropagation()}>
+              <button onClick={()=>abrirPopEditar(p)} style={{background:"rgba(30,111,235,.1)", border:"none", color:BLUE, fontWeight:700, fontSize:14, cursor:"pointer", padding:"6px 10px", borderRadius:10}}>✏️</button>
+              <button onClick={()=>eliminarPlaca(p.id)} style={{background:"rgba(179,55,42,.08)", border:"none", color:"#C0392B", fontWeight:800, fontSize:14, cursor:"pointer", padding:"6px 10px", borderRadius:10}}>✕</button>
+            </div>
+          </div>
+          <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginTop:12, paddingTop:10, borderTop:"1px solid "+(esUrgente?"#F0C4BE":"#EDF0F6"), flexWrap:"wrap", gap:8}}>
+            <div style={{fontSize:12.5, color:"#6B7690"}}>Registro: {p.fecha} · Vence: {p.venceStr||"—"}</div>
+            <span style={{...tag(
+              yaVencio ? "#FBE4E1" : esHoy ? "#FBE4E1" : esManana ? "#FFF0E0" : d<=7 ? "#FBF3DE" : "#EAF6EE",
+              yaVencio ? "#B3372A" : esHoy ? "#B3372A" : esManana ? "#9A5B00" : d<=7 ? "#8A6D1B" : "#1B7A3D"
+            ), fontSize:12.5, fontWeight:800}}>
+              {yaVencio ? `Venció hace ${Math.abs(d)}d` : esHoy ? "🔴 ¡HOY!" : esManana ? "🟠 ¡MAÑANA!" : `${d} días`}
+            </span>
+          </div>
+        </div>
+      );
+    };
+
     return (
       <Shell vista={vista} setVista={setVista} onNueva={irNueva} onSalir={salir} toast={toast} placas={db.placas}>
         <Popup />
 
-        {notificaciones.length > 0 && <div style={{...S.card, marginBottom:16, borderLeft:"4px solid #B3372A", background:"#FDF3F1"}}>
-          <div style={{fontWeight:800, color:NAVY, marginBottom:8, display:"flex", alignItems:"center", gap:8}}>
-            <span style={{fontSize:20}}>🔔</span> Notificaciones ({notificaciones.length})
-          </div>
-          {notificaciones.map((n)=>(
-            <div key={n.id} style={{display:"flex", justifyContent:"space-between", alignItems:"center", padding:"8px 0", borderBottom:"1px solid #F0C4BE", gap:10, flexWrap:"wrap"}}>
-              <div>
-                <div style={{fontWeight:700, color:NAVY, fontSize:14}}>{n.placa} · {n.tramite || "Sin tipo"}</div>
-                <div style={{fontSize:12.5, color: n.tipo==="vencido"?"#B3372A":n.tipo==="hoy"?"#B3372A":"#9A6B00", fontWeight:700}}>
-                  {n.tipo==="hoy" ? "🔴" : n.tipo==="manana" ? "🟡" : "⚫"} {n.mensaje} (vence {n.vence})
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>}
-
         <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16, flexWrap:"wrap", gap:10}}>
           <div>
             <h2 style={{...S.h2, fontSize:24}}>Placas</h2>
-            <p style={{fontSize:13.5, color:"#6B7690", marginTop:4, marginBottom:0}}>Trámites que se pueden hacer dentro de un mes. Te avisa un día antes y el mismo día de los 30 días.</p>
+            <p style={{fontSize:13.5, color:"#6B7690", marginTop:4, marginBottom:0}}>Registro de trámites a 30 días. Se alerta un día antes y el mismo día.</p>
           </div>
           <button style={S.btnP} onClick={abrirPopNuevo}>+ Agregar placa</button>
         </div>
 
-        {placas.length === 0 && <div style={{...S.card, padding:"32px 20px", textAlign:"center", color:"#9AA3B2", fontSize:14}}>Aún no hay placas registradas. Agrega una con el botón de arriba.</div>}
+        <input style={{...S.input, marginBottom:16, padding:"12px 16px", fontSize:15}} placeholder="🔍 Buscar por placa, trámite, fecha, días…"
+          value={buscaPlaca} onChange={(e)=>setBuscaPlaca(e.target.value)} />
+
+        {urgentes.length > 0 && !filtro && <>
+          <div style={{fontWeight:800, color:"#B3372A", fontSize:14, marginBottom:10, display:"flex", alignItems:"center", gap:8}}>
+            <span style={{fontSize:18}}>⚠️</span> Urgentes y próximas a vencer ({urgentes.length})
+          </div>
+          <div style={{display:"grid", gap:12, marginBottom:24}}>
+            {urgentes.map((p)=><TarjetaPlaca key={p.id+"u"} p={p} />)}
+          </div>
+        </>}
+
+        {!filtro && <div style={{fontWeight:800, color:NAVY, fontSize:14, marginBottom:10}}>
+          Todas las placas ({todas.length})
+        </div>}
+        {filtro && <div style={{fontWeight:800, color:NAVY, fontSize:14, marginBottom:10}}>
+          Resultados para "{buscaPlaca}" ({filtradas.length})
+        </div>}
+
+        {filtradas.length === 0 && <div style={{...S.card, padding:"32px 20px", textAlign:"center", color:"#9AA3B2", fontSize:14}}>
+          {placas.length === 0 ? "Aún no hay placas registradas." : "No se encontraron resultados."}
+        </div>}
         <div style={{display:"grid", gap:12}}>
-          {placas.map((p) => {
-            const fechaObj = p.fecha ? new Date(p.fecha + "T00:00:00") : null;
-            const vence = fechaObj ? new Date(fechaObj) : null;
-            if (vence) vence.setMonth(vence.getMonth() + 1);
-            const diasFaltan = vence ? Math.round((vence - new Date(hoyStr + "T00:00:00")) / 86400000) : null;
-            const esUrgente = diasFaltan !== null && diasFaltan <= 1;
-            const yaVencio = diasFaltan !== null && diasFaltan < 0;
-            return (
-              <div key={p.id} onClick={()=>abrirPopEditar(p)} style={{...S.card, padding:"16px 20px", cursor:"pointer", borderLeft: esUrgente ? "4px solid #D9483A" : "4px solid "+BLUE, background: esUrgente ? "#FDF3F1" : "#fff"}}>
-                <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:10}}>
-                  <div style={{display:"flex", alignItems:"center", gap:12}}>
-                    <div style={{width:44, height:44, borderRadius:14, background: esUrgente ? "linear-gradient(135deg,#F7C7BE,#EFA79A)" : `linear-gradient(135deg, ${NAVY}, #1E4A8F)`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0}}>🚗</div>
-                    <div>
-                      <div style={{fontWeight:800, color:NAVY, fontSize:17, letterSpacing:".08em"}}>{p.placa || "—"}</div>
-                      <div style={{fontSize:13.5, color:"#5A6478", marginTop:2}}>{p.tramite || "Sin trámite definido"}</div>
-                    </div>
-                  </div>
-                  <div style={{display:"flex", gap:6, flexShrink:0}} onClick={(e)=>e.stopPropagation()}>
-                    <button onClick={()=>abrirPopEditar(p)} style={{background:"rgba(30,111,235,.1)", border:"none", color:BLUE, fontWeight:700, fontSize:14, cursor:"pointer", padding:"6px 10px", borderRadius:10}}>✏️</button>
-                    <button onClick={()=>eliminarPlaca(p.id)} style={{background:"rgba(179,55,42,.08)", border:"none", color:"#C0392B", fontWeight:800, fontSize:14, cursor:"pointer", padding:"6px 10px", borderRadius:10}}>✕</button>
-                  </div>
-                </div>
-                <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginTop:12, paddingTop:10, borderTop:"1px solid #EDF0F6", flexWrap:"wrap", gap:8}}>
-                  <div style={{fontSize:12.5, color:"#6B7690"}}>Registrado: {p.fecha}</div>
-                  {diasFaltan !== null ? (
-                    <span style={{...tag(
-                      yaVencio ? "#FBE4E1" : diasFaltan<=1 ? "#FFF0E0" : diasFaltan<=7 ? "#FBF3DE" : "#EAF6EE",
-                      yaVencio ? "#B3372A" : diasFaltan<=1 ? "#9A5B00" : diasFaltan<=7 ? "#8A6D1B" : "#1B7A3D"
-                    ), fontSize:12.5}}>
-                      {yaVencio ? `Venció hace ${Math.abs(diasFaltan)}d` : diasFaltan===0 ? "¡HOY!" : diasFaltan===1 ? "¡MAÑANA!" : `Faltan ${diasFaltan} días`}
-                    </span>
-                  ) : <span style={{color:"#9AA3B2", fontSize:12}}>—</span>}
-                </div>
-              </div>
-            );
-          })}
+          {filtradas.map((p)=><TarjetaPlaca key={p.id} p={p} />)}
         </div>
 
         {placas.length > 0 && <div style={{fontSize:12.5, color:"#6B7690", marginTop:12}}>
@@ -2446,26 +2478,53 @@ function CajaApp({ onSalirCaja, tabla, titulo, onVerTramite }) {
     );
   }
   function Shell({ children, vista, setVista, onSalir, toast }) {
-    const NavBtn = ({ v, label }) => (
-      <button onClick={()=>setVista(v)} style={{
-        background: vista===v ? BLUE : "transparent", color: vista===v ? "#fff" : "#C7D6F0",
-        border:"none", padding:"11px 18px", borderRadius:10, fontWeight:800, fontSize:14.5, cursor:"pointer"}}>{label}</button>
-    );
+    const [menuAb, setMenuAb] = useState(false);
+    const menuItems = [
+      { v:"panel", label:"Panel", icon:"📊" },
+      { v:"movimientos", label:"Registrar", icon:"💰" },
+      { v:"resumen", label:"Movimientos", icon:"📋" },
+      { v:"arqueo", label:"Arqueo", icon:"🔍" },
+      ...(TABLA_CAJA === "caja_state" ? [{ v:"tramites", label:"Desde trámites", icon:"🚗" }] : []),
+      { v:"informe", label:"Informe", icon:"📄" },
+    ];
+    const nav = (v) => { setVista(v); setMenuAb(false); };
     return (
       <div style={{minHeight:"100vh", background:"#F4F6FA", fontFamily:"'Segoe UI',system-ui,sans-serif"}}>
-        <div style={{background:NAVY, padding:"16px clamp(20px,4vw,48px)", display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:12, position:"sticky", top:0, zIndex:10, boxShadow:"0 2px 12px rgba(10,30,66,.18)"}}>
-          <Logo dark alto={34} />
-          <div style={{display:"flex", gap:6, flexWrap:"wrap"}}>
-            <NavBtn v="panel" label="Panel" />
-            <NavBtn v="movimientos" label="Registrar" />
-            <NavBtn v="resumen" label="Movimientos" />
-            <NavBtn v="arqueo" label="Arqueo" />
-            {TABLA_CAJA === "caja_state" && <NavBtn v="tramites" label="Desde trámites" />}
-            <NavBtn v="informe" label="Informe" />
-            <button onClick={onSalir} style={{background:"transparent", border:"1.5px solid #3A5588", color:"#C7D6F0", padding:"10px 16px", borderRadius:10, fontSize:14, fontWeight:700, cursor:"pointer"}}>Salir</button>
+        <div style={{background:`linear-gradient(120deg, ${NAVY} 0%, #123262 60%, #0F2A54 100%)`, padding:"12px 16px", display:"flex", justifyContent:"space-between", alignItems:"center", position:"sticky", top:0, zIndex:20, boxShadow:"0 4px 20px rgba(10,30,66,.22)"}}>
+          <div style={{display:"flex", alignItems:"center", gap:12}}>
+            <button onClick={()=>setMenuAb(!menuAb)} style={{background:"rgba(255,255,255,.1)", border:"none", borderRadius:12, width:40, height:40, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:4, cursor:"pointer", padding:0}}>
+              <span style={{width:20, height:2.5, background:"#fff", borderRadius:2, display:"block", transition:"all .2s", transform: menuAb?"rotate(45deg) translateY(6.5px)":"none"}} />
+              <span style={{width:20, height:2.5, background:"#fff", borderRadius:2, display:"block", transition:"all .2s", opacity: menuAb?0:1}} />
+              <span style={{width:20, height:2.5, background:"#fff", borderRadius:2, display:"block", transition:"all .2s", transform: menuAb?"rotate(-45deg) translateY(-6.5px)":"none"}} />
+            </button>
+            <Logo dark alto={30} />
+          </div>
+          <button onClick={onSalir} style={{background:"rgba(255,255,255,.1)", border:"none", borderRadius:12, color:"#C7D6F0", padding:"8px 14px", fontSize:13, fontWeight:700, cursor:"pointer"}}>Salir</button>
+        </div>
+        {menuAb && <div onClick={()=>setMenuAb(false)} style={{position:"fixed", inset:0, zIndex:18, background:"rgba(10,30,66,.4)"}} />}
+        <div style={{position:"fixed", top:0, left:0, width:280, height:"100%", background:`linear-gradient(180deg, ${NAVY} 0%, #0F2A54 100%)`, zIndex:19, transform: menuAb?"translateX(0)":"translateX(-100%)", transition:"transform .25s ease", boxShadow: menuAb?"8px 0 30px rgba(0,0,0,.3)":"none", display:"flex", flexDirection:"column"}}>
+          <div style={{padding:"20px 22px 16px", borderBottom:"1px solid rgba(255,255,255,.1)"}}>
+            <Logo dark alto={32} />
+            <div style={{color:"#9DB4DE", fontSize:12, marginTop:8}}>{TITULO_APP}</div>
+          </div>
+          <div style={{flex:1, overflowY:"auto", padding:"12px 10px"}}>
+            {menuItems.map((item)=>(
+              <button key={item.v} onClick={()=>nav(item.v)} style={{
+                width:"100%", display:"flex", alignItems:"center", gap:14, padding:"14px 16px", borderRadius:14, border:"none", cursor:"pointer", marginBottom:4, textAlign:"left",
+                background: vista===item.v ? "linear-gradient(135deg,#2A7BF0,#1E6FEB)" : "transparent",
+                color: vista===item.v ? "#fff" : "#B9C7E0", fontWeight: vista===item.v ? 800 : 600, fontSize:15,
+                boxShadow: vista===item.v ? "0 4px 14px rgba(30,111,235,.35)" : "none", transition:"all .12s ease"
+              }}>
+                <span style={{fontSize:20, width:28, textAlign:"center"}}>{item.icon}</span>
+                {item.label}
+              </button>
+            ))}
+          </div>
+          <div style={{padding:"14px 16px", borderTop:"1px solid rgba(255,255,255,.1)"}}>
+            <button onClick={()=>{onSalir(); setMenuAb(false);}} style={{width:"100%", background:"rgba(255,255,255,.08)", border:"1px solid rgba(255,255,255,.15)", color:"#C7D6F0", padding:"12px", borderRadius:14, fontSize:14, fontWeight:700, cursor:"pointer"}}>← Volver</button>
           </div>
         </div>
-        <div style={{maxWidth:1180, margin:"0 auto", padding:"28px clamp(16px,3vw,36px)"}}>{children}</div>
+        <div style={{maxWidth:1180, margin:"0 auto", padding:"24px clamp(14px,3vw,36px)"}}>{children}</div>
         {toast && <div style={{position:"fixed", bottom:22, left:"50%", transform:"translateX(-50%)", background:NAVY, color:"#fff", padding:"12px 22px", borderRadius:12, fontWeight:700, fontSize:14, boxShadow:"0 6px 20px rgba(10,30,66,.3)", zIndex:50, maxWidth:"90vw", textAlign:"center"}}>{toast}</div>}
       </div>
     );
