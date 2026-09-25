@@ -365,7 +365,17 @@ function Logo({ dark, alto }) {
   );
 }
 
-function Shell({ children, vista, setVista, onNueva, onSalir, toast }) {
+function Shell({ children, vista, setVista, onNueva, onSalir, toast, placas }) {
+  const [notiAbierto, setNotiAbierto] = useState(false);
+  const hoyStr = hoy();
+  const notis = (placas || []).map((p) => {
+    if (!p.fecha) return null;
+    const f = new Date(p.fecha + "T00:00:00"); if (isNaN(f)) return null;
+    const v = new Date(f); v.setMonth(v.getMonth() + 1);
+    const d = Math.round((v - new Date(hoyStr + "T00:00:00")) / 86400000);
+    if (d > 1) return null;
+    return { ...p, dias: d, vence: v.toISOString().slice(0,10) };
+  }).filter(Boolean);
   const NavBtn = ({ v, label, onClick }) => (
     <button onClick={onClick} style={{
       background: vista===v ? "linear-gradient(135deg,#2A7BF0,#1E6FEB)" : "transparent", color: vista===v ? "#fff" : "#B9C7E0",
@@ -375,7 +385,31 @@ function Shell({ children, vista, setVista, onNueva, onSalir, toast }) {
   return (
     <div style={{minHeight:"100vh", background:"linear-gradient(180deg,#F0F3FA 0%,#F6F8FC 260px,#F6F8FC 100%)", fontFamily:"'Segoe UI',system-ui,sans-serif"}}>
       <div style={{background:`linear-gradient(120deg, ${NAVY} 0%, #123262 60%, #0F2A54 100%)`, padding:"16px clamp(20px, 4vw, 48px)", display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:12, position:"sticky", top:0, zIndex:10, boxShadow:"0 4px 20px rgba(10,30,66,.22)"}}>
-        <Logo dark alto={36} />
+        <div style={{display:"flex", alignItems:"center", gap:14}}>
+          <Logo dark alto={36} />
+          <div style={{position:"relative"}}>
+            <button onClick={()=>setNotiAbierto(!notiAbierto)} style={{background:"rgba(255,255,255,.1)", border:"none", borderRadius:"50%", width:40, height:40, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", fontSize:20, position:"relative"}}>
+              🔔
+              {notis.length > 0 && <span style={{position:"absolute", top:-2, right:-2, background:"#E24B4A", color:"#fff", fontSize:11, fontWeight:800, minWidth:20, height:20, borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", padding:"0 5px", border:"2px solid "+NAVY}}>{notis.length}</span>}
+            </button>
+            {notiAbierto && <div style={{position:"absolute", top:48, right:0, width:320, maxHeight:400, overflowY:"auto", background:"#fff", borderRadius:16, boxShadow:"0 12px 40px rgba(10,30,66,.3)", zIndex:100, border:"1px solid #E8ECF3"}}>
+              <div style={{padding:"14px 16px", borderBottom:"1px solid #EDF0F6", display:"flex", justifyContent:"space-between", alignItems:"center"}}>
+                <div style={{fontWeight:800, color:NAVY, fontSize:15}}>Notificaciones</div>
+                {notis.length > 0 && <button style={{background:"none", border:"none", color:BLUE, fontWeight:700, fontSize:13, cursor:"pointer"}} onClick={()=>{setVista("placas"); setNotiAbierto(false);}}>Ver todas</button>}
+              </div>
+              {notis.length === 0 && <div style={{padding:"24px 16px", textAlign:"center", color:"#9AA3B2", fontSize:14}}>No hay notificaciones pendientes.</div>}
+              {notis.map((n) => (
+                <div key={n.id} onClick={()=>{setVista("placas"); setNotiAbierto(false);}} style={{padding:"12px 16px", borderBottom:"1px solid #F4F6FA", cursor:"pointer", transition:"background .1s"}}
+                  onMouseEnter={(e)=>{e.currentTarget.style.background="#F8F9FC";}} onMouseLeave={(e)=>{e.currentTarget.style.background="transparent";}}>
+                  <div style={{fontWeight:700, color:NAVY, fontSize:14}}>{n.placa} · {n.tramite || "Sin tipo"}</div>
+                  <div style={{fontSize:12.5, marginTop:3, color: n.dias<=0?"#B3372A":"#9A5B00", fontWeight:600}}>
+                    {n.dias<0 ? `⚫ Venció hace ${Math.abs(n.dias)} día${Math.abs(n.dias)===1?"":"s"}` : n.dias===0 ? "🔴 ¡El mes se cumple HOY!" : "🟡 El mes se cumple MAÑANA"} · vence {n.vence}
+                  </div>
+                </div>
+              ))}
+            </div>}
+          </div>
+        </div>
         <div style={{display:"flex", gap:4, flexWrap:"wrap", background:"rgba(255,255,255,.06)", padding:5, borderRadius:28, alignItems:"center"}}>
           <NavBtn v="dashboard" label="Panel" onClick={()=>setVista("dashboard")} />
           <NavBtn v="cotizaciones" label="Cotizaciones" onClick={()=>setVista("cotizaciones")} />
@@ -1343,7 +1377,7 @@ function App() {
 
   /* ================= ELEGIR TIPO ================= */
   if (vista === "elegirTipo") return (
-    <Shell vista="form" setVista={setVista} onNueva={irNueva} onSalir={salir} toast={toast}>
+    <Shell vista="form" setVista={setVista} onNueva={irNueva} onSalir={salir} toast={toast} placas={db.placas}>
       <h2 style={{...S.h2, fontSize:26, marginBottom:6}}>¿Qué deseas crear?</h2>
       <p style={{fontSize:14.5, color:"#5A6478", marginTop:0, marginBottom:20}}>Una cotización es solo el estimado de precio. Un trámite ya incluye documentos y seguimiento completo.</p>
       <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(280px, 1fr))", gap:16}}>
@@ -1374,7 +1408,7 @@ function App() {
       </div>
     );
     return (
-      <Shell vista={vista} setVista={setVista} onNueva={irNueva} onSalir={salir} toast={toast}>
+      <Shell vista={vista} setVista={setVista} onNueva={irNueva} onSalir={salir} toast={toast} placas={db.placas}>
         <div style={{background:`linear-gradient(135deg, #1E4A8F 0%, ${NAVY} 55%, #0F2A54 100%)`, borderRadius:24, padding:"26px 28px", marginBottom:22, position:"relative", overflow:"hidden", boxShadow:"0 12px 32px rgba(10,30,66,.28)"}}>
           <div style={{position:"absolute", width:220, height:220, borderRadius:"50%", background:"radial-gradient(circle, rgba(30,111,235,.35), transparent 70%)", top:-90, right:-60}} />
           <div style={{position:"relative", display:"flex", justifyContent:"space-between", alignItems:"flex-start", flexWrap:"wrap", gap:16}}>
@@ -1520,7 +1554,7 @@ function App() {
 
   /* ================= RESPALDO ================= */
   if (vista === "ajustes") return (
-    <Shell vista={vista} setVista={setVista} onNueva={irNueva} onSalir={salir} toast={toast}>
+    <Shell vista={vista} setVista={setVista} onNueva={irNueva} onSalir={salir} toast={toast} placas={db.placas}>
       <h2 style={{...S.h2, fontSize:26, marginBottom:16}}>Respaldo de información</h2>
       <Sec titulo="Descargar respaldo">
         <p style={{fontSize:14, color:"#5A6478", marginTop:0}}>
@@ -1540,7 +1574,7 @@ function App() {
 
   /* ================= LISTA ================= */
   if (vista === "lista" || vista === "archivados" || vista === "cotizaciones") return (
-    <Shell vista={vista} setVista={setVista} onNueva={irNueva} onSalir={salir} toast={toast}>
+    <Shell vista={vista} setVista={setVista} onNueva={irNueva} onSalir={salir} toast={toast} placas={db.placas}>
       <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14, flexWrap:"wrap", gap:10}}>
         <h2 style={{...S.h2, fontSize:26}}>{vista === "archivados" ? "Trámites finalizados" : vista === "cotizaciones" ? "Cotizaciones" : "Trámites"}</h2>
         <button style={S.btnP} onClick={irNueva}>+ Nuevo</button>
@@ -1584,7 +1618,7 @@ function App() {
   if (vista === "form" && form) {
     const t = totales(form);
     return (
-      <Shell vista={vista} setVista={setVista} onNueva={irNueva} onSalir={salir} toast={toast}>
+      <Shell vista={vista} setVista={setVista} onNueva={irNueva} onSalir={salir} toast={toast} placas={db.placas}>
         <h2 style={{...S.h2, fontSize:26, marginBottom:16}}>{form.numero ? "Editar " + form.numero : (esCotizacion(form) ? "Nueva cotización" : "Nuevo trámite")}</h2>
         <Sec titulo="Datos generales">
           <G2>
@@ -1896,7 +1930,7 @@ function App() {
     const c = db.cotizaciones.find((x)=>x.id===sel.id) || sel;
     const t = totales(c);
     return (
-      <Shell vista={vista} setVista={setVista} onNueva={irNueva} onSalir={salir} toast={toast}>
+      <Shell vista={vista} setVista={setVista} onNueva={irNueva} onSalir={salir} toast={toast} placas={db.placas}>
         <div style={{background:`linear-gradient(135deg, ${NAVY} 0%, #163a6e 55%, #0F2A54 100%)`, borderRadius:22, padding:"22px 26px", marginBottom:16, position:"relative", overflow:"hidden", boxShadow:"0 10px 28px rgba(10,30,66,.24)"}}>
           <div style={{position:"absolute", width:180, height:180, borderRadius:"50%", background:"radial-gradient(circle, rgba(255,255,255,.08), transparent 70%)", top:-70, right:-40}} />
           <div style={{position:"relative", display:"flex", justifyContent:"space-between", alignItems:"flex-start", flexWrap:"wrap", gap:14}}>
@@ -2128,35 +2162,70 @@ function App() {
   if (vista === "placas") {
     const placas = db.placas || [];
     const hoyStr = hoy();
-    /* calcular notificaciones: un día antes y el mismo día de los 30 días cumplidos */
     const notificaciones = placas.map((p) => {
       if (!p.fecha) return null;
-      const fechaObj = new Date(p.fecha + "T00:00:00");
-      if (isNaN(fechaObj)) return null;
-      const vence = new Date(fechaObj); vence.setMonth(vence.getMonth() + 1);
-      const diasFaltan = Math.round((vence - new Date(hoyStr + "T00:00:00")) / 86400000);
-      if (diasFaltan > 1) return null;
-      let tipo, mensaje;
-      if (diasFaltan < 0) { tipo = "vencido"; mensaje = `Venció hace ${Math.abs(diasFaltan)} día${Math.abs(diasFaltan)===1?"":"s"}`; }
-      else if (diasFaltan === 0) { tipo = "hoy"; mensaje = "¡El mes se cumple HOY!"; }
-      else { tipo = "manana"; mensaje = "El mes se cumple MAÑANA"; }
-      return { ...p, tipo, mensaje, vence: vence.toISOString().slice(0,10) };
+      const f = new Date(p.fecha + "T00:00:00"); if (isNaN(f)) return null;
+      const v = new Date(f); v.setMonth(v.getMonth() + 1);
+      const d = Math.round((v - new Date(hoyStr + "T00:00:00")) / 86400000);
+      if (d > 1) return null;
+      return { ...p, dias: d, vence: v.toISOString().slice(0,10),
+        tipo: d<0?"vencido":d===0?"hoy":"manana",
+        mensaje: d<0?`Venció hace ${Math.abs(d)} día${Math.abs(d)===1?"":"s"}`:d===0?"¡El mes se cumple HOY!":"El mes se cumple MAÑANA" };
     }).filter(Boolean);
 
-    const agregarPlaca = () => {
-      const nueva = { id: uid(), placa: "", tramite: "", fecha: hoyStr };
-      guardarDb({ ...db, placas: [...placas, nueva] });
-    };
-    const editarPlaca = (id, campo, valor) => {
-      guardarDb({ ...db, placas: placas.map(p => p.id === id ? { ...p, [campo]: campo === "placa" ? valor.toUpperCase() : valor } : p) });
-    };
-    const eliminarPlaca = (id) => {
-      if (!window.confirm("¿Eliminar este registro?")) return;
-      guardarDb({ ...db, placas: placas.filter(p => p.id !== id) });
+    const eliminarPlaca = (id) => { if (window.confirm("¿Eliminar este registro?")) guardarDb({ ...db, placas: placas.filter(p => p.id !== id) }); };
+
+    /* Popup para agregar / editar */
+    const [popPlaca, setPopPlaca] = useState(null); // null = cerrado, {} = nuevo, {id,...} = editando
+    const [ppPlaca, setPpPlaca] = useState("");
+    const [ppTramite, setPpTramite] = useState("");
+    const [ppFecha, setPpFecha] = useState(hoyStr);
+    const [ppError, setPpError] = useState("");
+
+    const abrirPopNuevo = () => { setPopPlaca({}); setPpPlaca(""); setPpTramite(""); setPpFecha(hoyStr); setPpError(""); };
+    const abrirPopEditar = (p) => { setPopPlaca(p); setPpPlaca(p.placa); setPpTramite(p.tramite); setPpFecha(p.fecha); setPpError(""); };
+    const cerrarPop = () => setPopPlaca(null);
+    const guardarPop = () => {
+      if (!ppPlaca.trim()) { setPpError("Escribe la placa del vehículo."); return; }
+      if (!ppFecha) { setPpError("Selecciona la fecha de registro."); return; }
+      const dato = { placa: ppPlaca.trim().toUpperCase(), tramite: ppTramite.trim(), fecha: ppFecha };
+      if (popPlaca && popPlaca.id) {
+        guardarDb({ ...db, placas: placas.map(p => p.id === popPlaca.id ? { ...p, ...dato } : p) });
+      } else {
+        guardarDb({ ...db, placas: [...placas, { id: uid(), ...dato }] });
+      }
+      cerrarPop();
+      notificar(popPlaca && popPlaca.id ? "Placa actualizada." : "Placa registrada.");
     };
 
+    const Popup = () => popPlaca === null ? null : (
+      <div style={{position:"fixed", inset:0, zIndex:999, background:"rgba(10,30,66,.55)", display:"flex", alignItems:"center", justifyContent:"center", padding:20}} onClick={cerrarPop}>
+        <div onClick={(e)=>e.stopPropagation()} style={{background:"#fff", borderRadius:22, padding:"28px 26px", width:"100%", maxWidth:420, boxShadow:"0 20px 50px rgba(10,30,66,.3)"}}>
+          <h3 style={{...S.h2, fontSize:20, marginBottom:18}}>{popPlaca.id ? "Editar placa" : "Agregar nueva placa"}</h3>
+          <Campo label="Placa del vehículo">
+            <input style={{...S.input, fontWeight:700, letterSpacing:".08em", textTransform:"uppercase", fontSize:18, textAlign:"center", padding:"14px 16px"}}
+              value={ppPlaca} onChange={(e)=>{setPpPlaca(e.target.value.toUpperCase()); setPpError("");}} placeholder="ABC123" autoFocus />
+          </Campo>
+          <Campo label="Tipo de trámite">
+            <input style={{...S.input, padding:"12px 14px"}}
+              value={ppTramite} onChange={(e)=>setPpTramite(e.target.value)} placeholder="Traspaso, matrícula, cambio de color…" />
+          </Campo>
+          <Campo label="Fecha de registro">
+            <input type="date" style={{...S.input, padding:"12px 14px"}} value={ppFecha} onChange={(e)=>{setPpFecha(e.target.value); setPpError("");}} />
+          </Campo>
+          {ppError && <div style={{color:"#B3372A", fontSize:13, fontWeight:600, marginBottom:10}}>{ppError}</div>}
+          <div style={{display:"flex", gap:10, marginTop:8}}>
+            <button style={{...S.btnP, flex:1, padding:"14px"}} onClick={guardarPop}>{popPlaca.id ? "Guardar cambios" : "Agregar"}</button>
+            <button style={{...S.btnS, flex:1, padding:"14px"}} onClick={cerrarPop}>Cancelar</button>
+          </div>
+        </div>
+      </div>
+    );
+
     return (
-      <Shell vista={vista} setVista={setVista} onNueva={irNueva} onSalir={salir} toast={toast}>
+      <Shell vista={vista} setVista={setVista} onNueva={irNueva} onSalir={salir} toast={toast} placas={db.placas}>
+        <Popup />
+
         {notificaciones.length > 0 && <div style={{...S.card, marginBottom:16, borderLeft:"4px solid #B3372A", background:"#FDF3F1"}}>
           <div style={{fontWeight:800, color:NAVY, marginBottom:8, display:"flex", alignItems:"center", gap:8}}>
             <span style={{fontSize:20}}>🔔</span> Notificaciones ({notificaciones.length})
@@ -2165,11 +2234,10 @@ function App() {
             <div key={n.id} style={{display:"flex", justifyContent:"space-between", alignItems:"center", padding:"8px 0", borderBottom:"1px solid #F0C4BE", gap:10, flexWrap:"wrap"}}>
               <div>
                 <div style={{fontWeight:700, color:NAVY, fontSize:14}}>{n.placa} · {n.tramite || "Sin tipo"}</div>
-                <div style={{fontSize:12.5, color: n.tipo==="vencido"?"#B3372A": n.tipo==="hoy"?"#B3372A":"#9A6B00", fontWeight:700}}>
+                <div style={{fontSize:12.5, color: n.tipo==="vencido"?"#B3372A":n.tipo==="hoy"?"#B3372A":"#9A6B00", fontWeight:700}}>
                   {n.tipo==="hoy" ? "🔴" : n.tipo==="manana" ? "🟡" : "⚫"} {n.mensaje} (vence {n.vence})
                 </div>
               </div>
-              <div style={{fontSize:12, color:"#5A6478"}}>Registrado: {n.fecha}</div>
             </div>
           ))}
         </div>}
@@ -2177,9 +2245,9 @@ function App() {
         <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16, flexWrap:"wrap", gap:10}}>
           <div>
             <h2 style={{...S.h2, fontSize:24}}>Placas</h2>
-            <p style={{fontSize:13.5, color:"#6B7690", marginTop:4, marginBottom:0}}>Registro de trámites que se pueden hacer dentro de un mes. Al cumplirse los 30 días te avisa un día antes y el mismo día.</p>
+            <p style={{fontSize:13.5, color:"#6B7690", marginTop:4, marginBottom:0}}>Trámites que se pueden hacer dentro de un mes. Te avisa un día antes y el mismo día de los 30 días.</p>
           </div>
-          <button style={S.btnP} onClick={agregarPlaca}>+ Agregar placa</button>
+          <button style={S.btnP} onClick={abrirPopNuevo}>+ Agregar placa</button>
         </div>
 
         <div style={{...S.card, padding:0, overflow:"hidden"}}>
@@ -2188,13 +2256,13 @@ function App() {
               <tr style={{background:`linear-gradient(135deg, ${NAVY}, #163a6e)`, color:"#fff"}}>
                 <th style={{padding:"12px 14px", textAlign:"left", fontWeight:700, fontSize:12.5, textTransform:"uppercase", letterSpacing:".05em"}}>Placa</th>
                 <th style={{padding:"12px 14px", textAlign:"left", fontWeight:700, fontSize:12.5, textTransform:"uppercase", letterSpacing:".05em"}}>Trámite</th>
-                <th style={{padding:"12px 14px", textAlign:"left", fontWeight:700, fontSize:12.5, textTransform:"uppercase", letterSpacing:".05em"}}>Fecha registro</th>
+                <th style={{padding:"12px 14px", textAlign:"left", fontWeight:700, fontSize:12.5, textTransform:"uppercase", letterSpacing:".05em"}}>Fecha</th>
                 <th style={{padding:"12px 14px", textAlign:"left", fontWeight:700, fontSize:12.5, textTransform:"uppercase", letterSpacing:".05em"}}>Vence en</th>
-                <th style={{padding:"12px 8px", width:50}}></th>
+                <th style={{padding:"12px 8px", width:80}}></th>
               </tr>
             </thead>
             <tbody>
-              {placas.length === 0 && <tr><td colSpan={5} style={{padding:"28px 14px", textAlign:"center", color:"#9AA3B2"}}>Aún no hay placas registradas. Agrega una con el botón de arriba.</td></tr>}
+              {placas.length === 0 && <tr><td colSpan={5} style={{padding:"28px 14px", textAlign:"center", color:"#9AA3B2"}}>Aún no hay placas registradas.</td></tr>}
               {placas.map((p, i) => {
                 const fechaObj = p.fecha ? new Date(p.fecha + "T00:00:00") : null;
                 const vence = fechaObj ? new Date(fechaObj) : null;
@@ -2203,20 +2271,11 @@ function App() {
                 const esUrgente = diasFaltan !== null && diasFaltan <= 1;
                 const yaVencio = diasFaltan !== null && diasFaltan < 0;
                 return (
-                  <tr key={p.id} style={{borderBottom:"1px solid #EDF0F6", background: esUrgente ? "#FDF3F1" : i%2===0 ? "#fff" : "#FAFBFC"}}>
-                    <td style={{padding:"10px 14px"}}>
-                      <input style={{...S.input, padding:"8px 10px", fontWeight:700, letterSpacing:".08em", textTransform:"uppercase", border: esUrgente?"1.5px solid #D9483A":"1.5px solid #E1E6F0"}}
-                        value={p.placa} onChange={(e)=>editarPlaca(p.id, "placa", e.target.value)} placeholder="ABC123" />
-                    </td>
-                    <td style={{padding:"10px 14px"}}>
-                      <input style={{...S.input, padding:"8px 10px"}}
-                        value={p.tramite} onChange={(e)=>editarPlaca(p.id, "tramite", e.target.value)} placeholder="Traspaso, matrícula…" />
-                    </td>
-                    <td style={{padding:"10px 14px"}}>
-                      <input type="date" style={{...S.input, padding:"8px 10px"}}
-                        value={p.fecha} onChange={(e)=>editarPlaca(p.id, "fecha", e.target.value)} />
-                    </td>
-                    <td style={{padding:"10px 14px"}}>
+                  <tr key={p.id} style={{borderBottom:"1px solid #EDF0F6", background: esUrgente ? "#FDF3F1" : i%2===0 ? "#fff" : "#FAFBFC", cursor:"pointer"}} onClick={()=>abrirPopEditar(p)}>
+                    <td style={{padding:"12px 14px", fontWeight:800, color:NAVY, letterSpacing:".08em", fontSize:15}}>{p.placa || "—"}</td>
+                    <td style={{padding:"12px 14px", color:"#333"}}>{p.tramite || <span style={{color:"#9AA3B2"}}>—</span>}</td>
+                    <td style={{padding:"12px 14px", color:"#5A6478", fontSize:13}}>{p.fecha}</td>
+                    <td style={{padding:"12px 14px"}}>
                       {diasFaltan !== null ? (
                         <span style={{...tag(
                           yaVencio ? "#FBE4E1" : diasFaltan<=1 ? "#FFF0E0" : diasFaltan<=7 ? "#FBF3DE" : "#EAF6EE",
@@ -2226,8 +2285,9 @@ function App() {
                         </span>
                       ) : <span style={{color:"#9AA3B2", fontSize:13}}>—</span>}
                     </td>
-                    <td style={{padding:"10px 8px", textAlign:"center"}}>
-                      <button onClick={()=>eliminarPlaca(p.id)} style={{background:"none", border:"none", color:"#C0392B", fontWeight:800, fontSize:16, cursor:"pointer", padding:"4px 8px"}}>✕</button>
+                    <td style={{padding:"12px 8px", textAlign:"center"}} onClick={(e)=>e.stopPropagation()}>
+                      <button onClick={()=>abrirPopEditar(p)} style={{background:"none", border:"none", color:BLUE, fontWeight:700, fontSize:13, cursor:"pointer", padding:"4px 8px", marginRight:2}}>✏️</button>
+                      <button onClick={()=>eliminarPlaca(p.id)} style={{background:"none", border:"none", color:"#C0392B", fontWeight:800, fontSize:14, cursor:"pointer", padding:"4px 8px"}}>✕</button>
                     </td>
                   </tr>
                 );
@@ -2237,7 +2297,7 @@ function App() {
         </div>
 
         {placas.length > 0 && <div style={{fontSize:12.5, color:"#6B7690", marginTop:12}}>
-          {placas.length} placa{placas.length===1?"":"s"} registrada{placas.length===1?"":"s"} · Las notificaciones aparecen un día antes y el mismo día en que se cumplen los 30 días.
+          {placas.length} placa{placas.length===1?"":"s"} registrada{placas.length===1?"":"s"} · Toca una fila para editarla.
         </div>}
       </Shell>
     );
